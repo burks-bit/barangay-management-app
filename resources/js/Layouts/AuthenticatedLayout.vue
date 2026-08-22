@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
-import { Bell } from 'lucide-vue-next';
+import { Bell, ClipboardList, FileText, Info, MessageSquare } from 'lucide-vue-next';
 
 const page = usePage();
 const auth = computed(() => page.props.auth || {});
@@ -102,6 +102,20 @@ const notificationLink = (notification) => {
     }
 
     return '/dashboard';
+};
+
+const notificationIcon = (notification) => {
+    if (notification.data?.type === 'complaint') return MessageSquare;
+    if (notification.data?.type === 'request') return FileText;
+    if (notification.data?.type === 'assistance') return ClipboardList;
+    return Info;
+};
+
+const notificationIconClass = (notification) => {
+    if (notification.data?.type === 'complaint') return 'bg-orange-100 text-orange-700';
+    if (notification.data?.type === 'request') return 'bg-blue-100 text-blue-700';
+    if (notification.data?.type === 'assistance') return 'bg-green-100 text-green-700';
+    return 'bg-gray-100 text-gray-600';
 };
 
 const openNotification = (notification) => {
@@ -270,13 +284,13 @@ const roleBadge = computed(() => {
 
                             <div
                                 v-if="showingNotifications"
-                                class="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                                class="fixed left-4 right-4 top-20 z-30 max-h-[min(70vh,28rem)] overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5 sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-2 sm:w-80 sm:max-w-[calc(100vw-2rem)]"
                             >
                                 <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
                                     <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
                                     <span class="text-xs text-gray-500">{{ unreadNotificationCount }} unread</span>
                                 </div>
-                                <div v-if="notifications.length" class="max-h-80 overflow-y-auto">
+                                <div v-if="notifications.length" class="max-h-[calc(min(70vh,28rem)-4rem)] overflow-y-auto scrollbar-hidden">
                                     <button
                                         v-for="notification in notifications"
                                         :key="notification.id"
@@ -285,9 +299,15 @@ const roleBadge = computed(() => {
                                         :class="{ 'bg-blue-50/50': !notification.read_at }"
                                         @click="openNotification(notification); showingNotifications = false"
                                     >
-                                        <div class="flex items-start gap-2">
+                                        <div class="flex items-start gap-3">
                                             <span v-if="!notification.read_at" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-600"></span>
-                                            <div :class="{ 'ml-4': notification.read_at }" class="min-w-0">
+                                            <span v-else class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" :class="notificationIconClass(notification)">
+                                                <component :is="notificationIcon(notification)" class="h-4 w-4" aria-hidden="true" />
+                                            </span>
+                                            <span v-if="!notification.read_at" class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" :class="notificationIconClass(notification)">
+                                                <component :is="notificationIcon(notification)" class="h-4 w-4" aria-hidden="true" />
+                                            </span>
+                                            <div class="min-w-0">
                                                 <p class="text-sm font-medium text-gray-900">{{ notification.data?.title || 'Notification' }}</p>
                                                 <p class="mt-1 text-xs text-gray-600">{{ notification.data?.message || 'Open notification' }}</p>
                                             </div>
