@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatCard from '@/Components/StatCard.vue';
+import WeatherCard from '@/Components/WeatherCard.vue';
 import { Head } from '@inertiajs/vue3';
 
 defineProps({
@@ -20,6 +21,8 @@ defineProps({
                 <h1 class="text-2xl font-bold">Barangay Overview</h1>
                 <p class="text-blue-100 mt-1">System-wide statistics and operations summary</p>
             </div>
+
+            <WeatherCard />
 
             <!-- Stats grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">

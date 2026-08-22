@@ -1,6 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import WeatherCard from '@/Components/WeatherCard.vue';
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
 
@@ -57,6 +58,8 @@ const isAlarmingAnnouncement = (announcement) => {
                 <h1 class="text-2xl font-bold">{{ greeting }}, {{ firstName }}!</h1>
                 <p class="text-green-100 mt-1">Here's an overview of your requests and community updates.</p>
             </div>
+
+            <WeatherCard />
 
             <!-- Emergency announcements -->
             <div v-if="announcements.filter(a => a.priority === 'emergency').length" class="space-y-3">

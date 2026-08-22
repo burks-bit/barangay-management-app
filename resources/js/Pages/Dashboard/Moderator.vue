@@ -2,6 +2,7 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import StatCard from '@/Components/StatCard.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
+import WeatherCard from '@/Components/WeatherCard.vue';
 import { Head, Link } from '@inertiajs/vue3';
 
 defineProps({
@@ -30,6 +31,8 @@ const formatDate = (date) => {
                 <h1 class="text-2xl font-bold">Operations Dashboard</h1>
                 <p class="text-blue-100 mt-1">Your assigned tasks and urgent items requiring attention</p>
             </div>
+
+            <WeatherCard />
 
             <!-- Stats grid -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
