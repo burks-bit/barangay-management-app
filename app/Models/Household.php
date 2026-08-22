@@ -18,6 +18,9 @@ class Household extends Model
         'purok_id',
         'contact_number',
         'head_of_family_id',
+        'evacuation_center_id',
+        'evacuated_at',
+        'evacuation_status',
         'vulnerability_indicators',
         'notes',
     ];
@@ -26,6 +29,7 @@ class Household extends Model
     {
         return [
             'vulnerability_indicators' => 'array',
+            'evacuated_at' => 'datetime',
         ];
     }
 
@@ -37,6 +41,11 @@ class Household extends Model
     public function headOfFamily(): BelongsTo
     {
         return $this->belongsTo(MemberProfile::class, 'head_of_family_id');
+    }
+
+    public function evacuationCenter(): BelongsTo
+    {
+        return $this->belongsTo(EvacuationCenter::class);
     }
 
     public function members(): HasMany

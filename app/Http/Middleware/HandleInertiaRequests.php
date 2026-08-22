@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\BarangayProfile;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -28,11 +29,6 @@ class HandleInertiaRequests extends Middleware
     /**
      * Defines the props that are shared with all Inertia responses.
      *
-     * Note: auth data is shared eagerly (not via lazy closures) so it is
-     * always present on full page loads. Lazy props (fn () => ...) are only
-     * included on partial reloads, which would leave `auth` undefined in the
-     * browser on initial navigation.
-     *
      * @param  \Illuminate\Http\Request  $request
      * @return array<string, mixed>
      */
@@ -46,6 +42,9 @@ class HandleInertiaRequests extends Middleware
                 'roles' => $user ? $user->getRoleNames()->values() : [],
                 'permissions' => $user ? $user->getAllPermissions()->pluck('name')->values() : [],
             ],
+            'barangay' => BarangayProfile::where('is_active', true)
+                ->with(['officials' => fn ($q) => $q->where('is_active', true)])
+                ->first(),
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),
                 'error' => fn () => $request->session()->get('error'),

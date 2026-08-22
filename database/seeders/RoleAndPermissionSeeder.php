@@ -64,6 +64,7 @@ class RoleAndPermissionSeeder extends Seeder
             'view evacuation centers',
             'create evacuation centers',
             'update evacuation centers',
+            'delete evacuation centers',
             'manage evacuations',
 
             // Relief Inventory
@@ -171,6 +172,8 @@ class RoleAndPermissionSeeder extends Seeder
             'create complaints',
             'create requests',
             'create assistance',
+            'view calamities',
+            'view evacuation centers',
             'view incidents',
         ];
         $member->syncPermissions($memberPermissions);

@@ -2,10 +2,13 @@
 
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AssistanceController;
+use App\Http\Controllers\BarangayProfileController;
+use App\Http\Controllers\CalamityController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\DisasterController;
+use App\Http\Controllers\EvacuationCenterController;
 use App\Http\Controllers\ReliefController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ResidentController;
@@ -41,15 +44,44 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
 
-    // Disaster information (read-only for authenticated users)
-    Route::get('/calamities', [DisasterController::class, 'calamities'])->name('calamities.index');
-    Route::get('/evacuation-centers', [DisasterController::class, 'evacuationCenters'])->name('evacuation-centers.index');
+    Route::post('/evacuation-centers/select', [DisasterController::class, 'selectEvacuationCenter'])->name('evacuation-centers.select');
+    Route::post('/evacuation-centers/return', [DisasterController::class, 'returnHome'])->name('evacuation-centers.return');
     Route::get('/evacuations', [DisasterController::class, 'evacuations'])->name('evacuations.index');
     Route::get('/relief-inventory', [ReliefController::class, 'inventory'])->name('relief-inventory.index');
     Route::get('/relief-distributions', [ReliefController::class, 'distributions'])->name('relief-distributions.index');
 
+    // Barangay Profile (admin)
+    Route::middleware('can:manage settings')->group(function () {
+        Route::get('/barangay', [BarangayProfileController::class, 'index'])->name('barangay.index');
+        Route::get('/barangay/create', [BarangayProfileController::class, 'create'])->name('barangay.create');
+        Route::post('/barangay', [BarangayProfileController::class, 'store'])->name('barangay.store');
+        Route::get('/barangay/{barangay}', [BarangayProfileController::class, 'show'])->name('barangay.show');
+        Route::get('/barangay/{barangay}/edit', [BarangayProfileController::class, 'edit'])->name('barangay.edit');
+        Route::put('/barangay/{barangay}', [BarangayProfileController::class, 'update'])->name('barangay.update');
+        Route::delete('/barangay/{barangay}', [BarangayProfileController::class, 'destroy'])->name('barangay.destroy');
+
+        // Officials
+        Route::post('/barangay/{barangay}/officials', [BarangayProfileController::class, 'storeOfficial'])->name('barangay.officials.store');
+        Route::put('/barangay/{barangay}/officials/{official}', [BarangayProfileController::class, 'updateOfficial'])->name('barangay.officials.update');
+        Route::delete('/barangay/{barangay}/officials/{official}', [BarangayProfileController::class, 'destroyOfficial'])->name('barangay.officials.destroy');
+    });
+
+    // Households (admin management)
     Route::middleware('can:view households')->group(function () {
         Route::get('/households', [HouseholdController::class, 'index'])->name('households.index');
+    });
+    Route::middleware('can:create households')->group(function () {
+        Route::get('/households/create', [HouseholdController::class, 'create'])->name('households.create');
+        Route::post('/households', [HouseholdController::class, 'store'])->name('households.store');
+    });
+    Route::middleware('can:update households')->group(function () {
+        Route::get('/households/{household}/edit', [HouseholdController::class, 'edit'])->name('households.edit');
+        Route::put('/households/{household}', [HouseholdController::class, 'update'])->name('households.update');
+        Route::post('/households/{household}/evacuate', [HouseholdController::class, 'evacuate'])->name('households.evacuate');
+        Route::post('/households/{household}/return-home', [HouseholdController::class, 'returnHome'])->name('households.return-home');
+    });
+    Route::middleware('can:delete households')->group(function () {
+        Route::delete('/households/{household}', [HouseholdController::class, 'destroy'])->name('households.destroy');
     });
 
     // Assistance
@@ -80,6 +112,39 @@ Route::middleware(['auth'])->group(function () {
                 ->get(),
         ]);
     })->name('incidents.index');
+
+    // Calamities (admin/moderator CRUD)
+    Route::middleware('can:view calamities')->group(function () {
+        Route::get('/calamities', [CalamityController::class, 'index'])->name('calamities.index');
+    });
+    Route::middleware('can:create calamities')->group(function () {
+        Route::get('/calamities/create', [CalamityController::class, 'create'])->name('calamities.create');
+        Route::post('/calamities', [CalamityController::class, 'store'])->name('calamities.store');
+    });
+    Route::middleware('can:update calamities')->group(function () {
+        Route::get('/calamities/{calamity}/edit', [CalamityController::class, 'edit'])->name('calamities.edit');
+        Route::put('/calamities/{calamity}', [CalamityController::class, 'update'])->name('calamities.update');
+    });
+    Route::middleware('can:delete calamities')->group(function () {
+        Route::delete('/calamities/{calamity}', [CalamityController::class, 'destroy'])->name('calamities.destroy');
+    });
+
+    // Evacuation Centers (admin/moderator CRUD)
+    Route::middleware('can:view evacuation centers')->group(function () {
+        Route::get('/evacuation-centers', [EvacuationCenterController::class, 'index'])->name('evacuation-centers.index');
+        Route::get('/evacuation-center', [EvacuationCenterController::class, 'index'])->name('evacuation-center.index');
+    });
+    Route::middleware('can:create evacuation centers')->group(function () {
+        Route::get('/evacuation-centers/create', [EvacuationCenterController::class, 'create'])->name('evacuation-centers.create');
+        Route::post('/evacuation-centers', [EvacuationCenterController::class, 'store'])->name('evacuation-centers.store');
+    });
+    Route::middleware('can:update evacuation centers')->group(function () {
+        Route::get('/evacuation-centers/{evacuation_center}/edit', [EvacuationCenterController::class, 'edit'])->name('evacuation-centers.edit');
+        Route::put('/evacuation-centers/{evacuation_center}', [EvacuationCenterController::class, 'update'])->name('evacuation-centers.update');
+    });
+    Route::middleware('can:delete evacuation centers')->group(function () {
+        Route::delete('/evacuation-centers/{evacuation_center}', [EvacuationCenterController::class, 'destroy'])->name('evacuation-centers.destroy');
+    });
 
     // Residents (admin/moderator)
     Route::middleware('can:view residents')->group(function () {

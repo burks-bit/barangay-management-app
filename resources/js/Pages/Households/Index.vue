@@ -1,7 +1,7 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
-import { Head, router } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
@@ -30,9 +30,14 @@ watch([search, purokId], () => {
         <Head title="Households" />
 
         <div class="space-y-4">
-            <div>
-                <h1 class="text-xl font-bold text-gray-900">Households</h1>
-                <p class="text-sm text-gray-500 mt-1">View registered household records.</p>
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Households</h1>
+                    <p class="text-sm text-gray-500 mt-1">View registered household records.</p>
+                </div>
+                <Link v-if="$page.props.auth?.permissions?.includes('create households')" href="/households/create" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-wider hover:bg-blue-700 transition-colors">
+                    + Register Household
+                </Link>
             </div>
 
             <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 grid grid-cols-1 md:grid-cols-2 gap-3">

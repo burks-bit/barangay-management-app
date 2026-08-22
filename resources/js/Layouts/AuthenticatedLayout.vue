@@ -8,6 +8,7 @@ const user = computed(() => auth.value.user);
 const roles = computed(() => auth.value.roles || []);
 const permissions = computed(() => auth.value.permissions || []);
 const flash = computed(() => page.props.flash || {});
+const barangay = computed(() => page.props.barangay || null);
 // console.log('AuthenticatedLayout props', { auth: auth.value, user: user.value, roles: roles.value, permissions: permissions.value, flash: flash.value });
 const showingNavigationDropdown = ref(false);
 const sidebarOpen = ref(false);
@@ -53,6 +54,7 @@ const navigation = computed(() => {
     // Admin only
     if (can('manage users')) nav.push({ name: 'Users & Roles', href: '/users', icon: 'shield' });
     if (can('view audit logs')) nav.push({ name: 'Audit Logs', href: '/audit-logs', icon: 'history' });
+    if (can('manage settings')) nav.push({ name: 'Barangay Profile', href: '/barangay', icon: 'shield' });
 
     return nav;
 });
@@ -93,11 +95,11 @@ const roleBadge = computed(() => {
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                         </svg>
                     </div>
-                    <span class="ml-3 text-white font-semibold">Barangay MS</span>
+                    <span class="ml-3 text-white font-semibold">{{ barangay?.name || 'Barangay MS' }}</span>
                 </div>
             </div>
 
-            <nav class="mt-4 px-3 space-y-1 overflow-y-auto h-[calc(100vh-4rem)] pb-6">
+            <nav class="mt-4 px-3 space-y-1 overflow-y-auto scrollbar-hidden h-[calc(100vh-4rem)] pb-6">
                 <template v-for="item in navigation" :key="item.name">
                     <!-- Simple link -->
                     <Link
@@ -158,7 +160,7 @@ const roleBadge = computed(() => {
                         </button>
                         <div class="ml-2 lg:ml-0">
                             <h2 class="text-lg font-semibold text-gray-900">
-                                {{ $page.component.split('/').pop().replace(/([A-Z])/g, ' $1').trim() }}
+                                {{ $page.component.split('/').pop().replace(/(Index|Show|Create|Edit|My)/g, '').replace(/([A-Z])/g, ' $1').trim() }}
                             </h2>
                         </div>
                     </div>

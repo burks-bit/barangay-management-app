@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\BarangayProfile;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,17 @@ class AuthenticatedSessionController extends Controller
     {
         return Inertia::render('Auth/Login', [
             'canResetPassword' => false,
+            'barangay' => BarangayProfile::with(['activeOfficials' => function ($query) {
+                $query->select([
+                    'id',
+                    'barangay_profile_id',
+                    'position',
+                    'first_name',
+                    'middle_name',
+                    'last_name',
+                    'suffix',
+                ])->orderBy('position');
+            }])->where('is_active', true)->latest()->first(),
         ]);
     }
 

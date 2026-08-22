@@ -35,8 +35,31 @@ class EvacuationCenter extends Model
         return $this->hasMany(EvacuationEvent::class);
     }
 
+    public function households(): HasMany
+    {
+        return $this->hasMany(Household::class);
+    }
+
+    public function evacuatedHouseholds(): HasMany
+    {
+        return $this->hasMany(Household::class)->where('evacuation_status', 'evacuated');
+    }
+
     public function getAvailableCapacityAttribute(): int
     {
         return max(0, $this->capacity - $this->current_occupancy);
+    }
+
+    public function recalculateOccupancy(): void
+    {
+        $occupancy = $this->evacuatedHouseholds()
+            ->withCount('members')
+            ->get()
+            ->sum('members_count');
+
+        $this->update([
+            'current_occupancy' => $occupancy,
+            'status' => $occupancy >= $this->capacity ? 'full' : ($occupancy > 0 ? 'occupied' : 'available'),
+        ]);
     }
 }
