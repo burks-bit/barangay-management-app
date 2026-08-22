@@ -7,6 +7,7 @@ import { ref } from 'vue';
 const props = defineProps({
     complaint: Object,
     moderators: Array,
+    backUrl: { type: String, default: '/complaints' },
 });
 
 const showAssignForm = ref(false);
@@ -71,7 +72,7 @@ const isFinal = ['resolved', 'closed', 'rejected'].includes(props.complaint.stat
 
         <div class="max-w-4xl mx-auto space-y-4">
             <div class="flex items-center justify-between">
-                <Link href="/complaints" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to Complaints</Link>
+                <Link :href="props.backUrl" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to Complaints</Link>
                 <div class="flex items-center gap-2">
                     <StatusBadge :status="complaint.priority" />
                     <StatusBadge :status="complaint.status" />

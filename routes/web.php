@@ -11,6 +11,7 @@ use App\Http\Controllers\DisasterController;
 use App\Http\Controllers\EvacuationCenterController;
 use App\Http\Controllers\ReliefController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Models\Announcement;
@@ -43,6 +44,7 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
     Route::post('/evacuation-centers/select', [DisasterController::class, 'selectEvacuationCenter'])->name('evacuation-centers.select');
     Route::post('/evacuation-centers/return', [DisasterController::class, 'returnHome'])->name('evacuation-centers.return');
@@ -175,6 +177,7 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/my-requests', [ServiceRequestController::class, 'myRequests'])->name('my-requests');
         Route::get('/my-requests/create', [ServiceRequestController::class, 'create'])->name('my-requests.create');
         Route::post('/my-requests', [ServiceRequestController::class, 'store'])->name('my-requests.store');
+        Route::get('/my-requests/{service_request}', [ServiceRequestController::class, 'myShow'])->name('my-requests.show');
     });
 
     // Complaints (admin/moderator management)
@@ -192,5 +195,6 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/my-complaints', [ComplaintController::class, 'myComplaints'])->name('my-complaints');
         Route::get('/my-complaints/create', [ComplaintController::class, 'create'])->name('my-complaints.create');
         Route::post('/my-complaints', [ComplaintController::class, 'store'])->name('my-complaints.store');
+        Route::get('/my-complaints/{complaint}', [ComplaintController::class, 'myShow'])->name('my-complaints.show');
     });
 });

@@ -1,17 +1,22 @@
 <script setup>
-import { computed, ref, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { Bell } from 'lucide-vue-next';
 
 const page = usePage();
 const auth = computed(() => page.props.auth || {});
 const user = computed(() => auth.value.user);
 const roles = computed(() => auth.value.roles || []);
 const permissions = computed(() => auth.value.permissions || []);
+const notifications = computed(() => auth.value.notifications || []);
+const unreadNotificationCount = computed(() => auth.value.unread_notifications_count || 0);
 const flash = computed(() => page.props.flash || {});
 const barangay = computed(() => page.props.barangay || null);
 // console.log('AuthenticatedLayout props', { auth: auth.value, user: user.value, roles: roles.value, permissions: permissions.value, flash: flash.value });
 const showingNavigationDropdown = ref(false);
+const showingNotifications = ref(false);
 const sidebarOpen = ref(false);
+let notificationPollingTimer;
 const expandedSections = ref({
     Residents: false,
     'Community Services': false,
@@ -82,6 +87,46 @@ watch(() => page.url, openActiveSection, { immediate: true });
 const logout = () => {
     router.post('/logout');
 };
+
+const notificationLink = (notification) => {
+    if (notification.data?.type === 'complaint' && notification.data.complaint_id) {
+        return hasRole('member')
+            ? `/my-complaints/${notification.data.complaint_id}`
+            : `/complaints/${notification.data.complaint_id}`;
+    }
+
+    if (notification.data?.type === 'request' && notification.data.request_id) {
+        return hasRole('member')
+            ? `/my-requests/${notification.data.request_id}`
+            : `/requests/${notification.data.request_id}`;
+    }
+
+    return '/dashboard';
+};
+
+const openNotification = (notification) => {
+    if (!notification.read_at) {
+        router.post(`/notifications/${notification.id}/read`, {}, {
+            preserveScroll: true,
+            onSuccess: () => router.visit(notificationLink(notification)),
+        });
+        return;
+    }
+
+    router.visit(notificationLink(notification));
+};
+
+onMounted(() => {
+    notificationPollingTimer = window.setInterval(() => {
+        if (user.value) {
+            router.reload({ only: ['auth'], preserveState: true, preserveScroll: true });
+        }
+    }, 30000);
+});
+
+onBeforeUnmount(() => {
+    window.clearInterval(notificationPollingTimer);
+});
 
 const getInitials = (name) => {
     return name
@@ -205,11 +250,59 @@ const roleBadge = computed(() => {
                     </div>
 
                     <div class="flex items-center space-x-4">
+                        <!-- Notifications -->
+                        <div class="relative">
+                            <button
+                                type="button"
+                                class="relative rounded-full p-2 text-gray-500 hover:bg-gray-100 hover:text-gray-700"
+                                aria-label="Notifications"
+                                :aria-expanded="showingNotifications"
+                                @click="showingNotifications = !showingNotifications; showingNavigationDropdown = false"
+                            >
+                                <Bell class="h-5 w-5" />
+                                <span
+                                    v-if="unreadNotificationCount"
+                                    class="absolute -right-1 -top-1 flex min-h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1 text-[10px] font-bold leading-none text-white"
+                                >
+                                    {{ unreadNotificationCount > 99 ? '99+' : unreadNotificationCount }}
+                                </span>
+                            </button>
+
+                            <div
+                                v-if="showingNotifications"
+                                class="absolute right-0 z-30 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-lg bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                            >
+                                <div class="flex items-center justify-between border-b border-gray-100 px-4 py-3">
+                                    <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
+                                    <span class="text-xs text-gray-500">{{ unreadNotificationCount }} unread</span>
+                                </div>
+                                <div v-if="notifications.length" class="max-h-80 overflow-y-auto">
+                                    <button
+                                        v-for="notification in notifications"
+                                        :key="notification.id"
+                                        type="button"
+                                        class="block w-full border-b border-gray-100 px-4 py-3 text-left hover:bg-gray-50"
+                                        :class="{ 'bg-blue-50/50': !notification.read_at }"
+                                        @click="openNotification(notification); showingNotifications = false"
+                                    >
+                                        <div class="flex items-start gap-2">
+                                            <span v-if="!notification.read_at" class="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-600"></span>
+                                            <div :class="{ 'ml-4': notification.read_at }" class="min-w-0">
+                                                <p class="text-sm font-medium text-gray-900">{{ notification.data?.title || 'Notification' }}</p>
+                                                <p class="mt-1 text-xs text-gray-600">{{ notification.data?.message || 'Open notification' }}</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                </div>
+                                <p v-else class="px-4 py-8 text-center text-sm text-gray-400">No notifications yet.</p>
+                            </div>
+                        </div>
+
                         <!-- User menu -->
                         <div class="relative" :class="{ 'dropdown-open': showingNavigationDropdown }">
                             <button
                                 class="flex items-center space-x-3 focus:outline-none"
-                                @click="showingNavigationDropdown = !showingNavigationDropdown"
+                                @click="showingNavigationDropdown = !showingNavigationDropdown; showingNotifications = false"
                             >
                         <div class="text-right hidden sm:block">
                                     <div class="text-sm font-medium text-gray-900">{{ user?.name }}</div>

@@ -6,6 +6,7 @@ import { ref } from 'vue';
 
 const props = defineProps({
     serviceRequest: Object,
+    backUrl: { type: String, default: '/requests' },
 });
 
 const permissions = () => window.__inertia_page?.props?.auth?.permissions || [];
@@ -51,7 +52,7 @@ const statusOptions = [
 
         <div class="max-w-4xl mx-auto space-y-4">
             <div class="flex items-center justify-between">
-                <Link href="/requests" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to Requests</Link>
+                <Link :href="props.backUrl" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to Requests</Link>
                 <StatusBadge :status="serviceRequest.status" />
             </div>
 

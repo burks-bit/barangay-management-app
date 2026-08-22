@@ -65,6 +65,19 @@ class ComplaintController extends Controller
         ]);
     }
 
+    public function myShow(Request $request, Complaint $complaint): Response
+    {
+        abort_unless($complaint->complainant_id === $request->user()->id, 403);
+
+        $complaint->load(['complainant.memberProfile.purok', 'category', 'assignedModerator', 'statusHistories.user', 'attachments']);
+
+        return Inertia::render('Complaints/Show', [
+            'complaint' => $complaint,
+            'moderators' => [],
+            'backUrl' => route('my-complaints'),
+        ]);
+    }
+
     public function create(): Response
     {
         return Inertia::render('Complaints/Create', [

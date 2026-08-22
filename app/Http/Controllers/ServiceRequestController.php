@@ -62,6 +62,18 @@ class ServiceRequestController extends Controller
         ]);
     }
 
+    public function myShow(Request $request, ServiceRequest $service_request): Response
+    {
+        abort_unless($service_request->requester_id === $request->user()->id, 403);
+
+        $service_request->load(['requester.memberProfile.purok', 'requestType', 'assignedStaff', 'statusHistories.user', 'attachments']);
+
+        return Inertia::render('Requests/Show', [
+            'serviceRequest' => $service_request,
+            'backUrl' => route('my-requests'),
+        ]);
+    }
+
     public function create(): Response
     {
         return Inertia::render('Requests/Create', [

@@ -41,6 +41,8 @@ class HandleInertiaRequests extends Middleware
                 'user' => $user ? $user->load('memberProfile') : null,
                 'roles' => $user ? $user->getRoleNames()->values() : [],
                 'permissions' => $user ? $user->getAllPermissions()->pluck('name')->values() : [],
+                'notifications' => $user ? $user->notifications()->latest()->take(10)->get() : [],
+                'unread_notifications_count' => $user ? $user->unreadNotifications()->count() : 0,
             ],
             'barangay' => BarangayProfile::where('is_active', true)
                 ->with(['officials' => fn ($q) => $q->where('is_active', true)])
