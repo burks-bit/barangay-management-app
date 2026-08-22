@@ -25,7 +25,7 @@ const formatDate = (date) => {
                     <Link
                         v-if="$page.props.auth?.permissions?.includes('update residents')"
                         :href="`/residents/${resident.id}/edit`"
-                        class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg hover:bg-indigo-700"
+                        class="action-link border-indigo-600 bg-indigo-600 text-white hover:bg-indigo-700"
                     >Edit</Link>
                     <button
                         v-if="$page.props.auth?.permissions?.includes('verify residents') && resident.verification_status === 'pending'"

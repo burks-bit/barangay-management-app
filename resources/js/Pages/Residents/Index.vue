@@ -121,11 +121,11 @@ const formatDate = (date) => {
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ resident.contact_number || '-' }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap"><StatusBadge :status="resident.verification_status" /></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                                    <Link :href="`/residents/${resident.id}`" class="text-blue-600 hover:text-blue-900">View</Link>
+                                    <Link :href="`/residents/${resident.id}`" class="action-link text-blue-700">View</Link>
                                     <Link
                                         v-if="$page.props.auth?.permissions?.includes('update residents')"
                                         :href="`/residents/${resident.id}/edit`"
-                                        class="text-indigo-600 hover:text-indigo-900"
+                                        class="action-link text-indigo-700"
                                     >Edit</Link>
                                     <button
                                         v-if="$page.props.auth?.permissions?.includes('verify residents') && resident.verification_status === 'pending'"

@@ -106,7 +106,7 @@ const deleteBarangay = () => {
                 </div>
                 <div class="flex gap-2">
                     <Link href="/barangay" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back</Link>
-                    <Link :href="`/barangay/${barangay.id}/edit`" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-100">Edit Profile</Link>
+                    <Link :href="`/barangay/${barangay.id}/edit`" class="action-link text-indigo-700">Edit Profile</Link>
                     <button @click="deleteBarangay" class="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-xs font-medium hover:bg-red-100">Delete</button>
                 </div>
             </div>

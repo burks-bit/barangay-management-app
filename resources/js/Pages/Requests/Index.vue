@@ -97,7 +97,7 @@ const formatDate = (date) => {
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatDate(request.submitted_at) }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap"><StatusBadge :status="request.status" /></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <Link :href="`/requests/${request.id}`" class="text-blue-600 hover:text-blue-900">View</Link>
+                                    <Link :href="`/requests/${request.id}`" class="action-link text-blue-700">View</Link>
                                 </td>
                             </tr>
                             <tr v-if="!requests.data.length">

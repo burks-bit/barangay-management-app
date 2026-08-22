@@ -51,7 +51,7 @@ const destroy = (calamity) => {
                             <div class="text-left sm:text-right">
                                 <StatusBadge :status="calamity.status" />
                                 <div v-if="$page.props.auth?.permissions?.includes('update calamities') || $page.props.auth?.permissions?.includes('delete calamities')" class="mt-2 flex gap-2 sm:justify-end">
-                                    <Link v-if="$page.props.auth?.permissions?.includes('update calamities')" :href="`/calamities/${calamity.id}/edit`" class="text-indigo-600 hover:text-indigo-900 text-sm">Edit</Link>
+                                    <Link v-if="$page.props.auth?.permissions?.includes('update calamities')" :href="`/calamities/${calamity.id}/edit`" class="action-link text-indigo-700">Edit</Link>
                                     <button v-if="$page.props.auth?.permissions?.includes('delete calamities')" @click="destroy(calamity)" class="text-red-600 hover:text-red-900 text-sm">Delete</button>
                                 </div>
                             </div>

@@ -80,7 +80,7 @@ const destroy = (center) => {
                     <p v-if="center.contact_person || center.contact_number" class="text-xs text-gray-500 mt-4">Contact: {{ center.contact_person || '-' }} {{ center.contact_number ? `(${center.contact_number})` : '' }}</p>
 
                     <div class="mt-4 flex items-center gap-2" v-if="canManage()">
-                        <Link :href="`/evacuation-centers/${center.id}/edit`" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-100">Edit</Link>
+                        <Link :href="`/evacuation-centers/${center.id}/edit`" class="action-link text-indigo-700">Edit</Link>
                         <button @click="destroy(center)" class="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-xs font-medium hover:bg-red-100">Delete</button>
                     </div>
                     <div v-else-if="isMember()" class="mt-4">

@@ -111,7 +111,7 @@ const formatDate = (date) => {
                                 <td class="px-6 py-4 whitespace-nowrap"><StatusBadge :status="complaint.priority" /></td>
                                 <td class="px-6 py-4 whitespace-nowrap"><StatusBadge :status="complaint.status" /></td>
                                 <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <Link :href="`/complaints/${complaint.id}`" class="text-blue-600 hover:text-blue-900">View</Link>
+                                    <Link :href="`/complaints/${complaint.id}`" class="action-link text-blue-700">View</Link>
                                 </td>
                             </tr>
                             <tr v-if="!complaints.data.length">

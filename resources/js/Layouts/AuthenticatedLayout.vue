@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { Head, Link, router, usePage } from '@inertiajs/vue3';
 
 const page = usePage();
@@ -12,9 +12,17 @@ const barangay = computed(() => page.props.barangay || null);
 // console.log('AuthenticatedLayout props', { auth: auth.value, user: user.value, roles: roles.value, permissions: permissions.value, flash: flash.value });
 const showingNavigationDropdown = ref(false);
 const sidebarOpen = ref(false);
+const expandedSections = ref({
+    Residents: false,
+    'Community Services': false,
+    'Disaster Management': false,
+});
 
 const can = (permission) => permissions.value.includes(permission);
 const hasRole = (role) => roles.value.includes(role);
+const toggleSection = (section) => {
+    expandedSections.value[section] = !expandedSections.value[section];
+};
 
 const navigation = computed(() => {
     const nav = [
@@ -58,6 +66,18 @@ const navigation = computed(() => {
 
     return nav;
 });
+
+const openActiveSection = (url) => {
+    const activeSection = navigation.value.find((item) =>
+        item.children?.some((child) => url.startsWith(child.href))
+    );
+
+    if (activeSection) {
+        expandedSections.value[activeSection.name] = true;
+    }
+};
+
+watch(() => page.url, openActiveSection, { immediate: true });
 
 const logout = () => {
     router.post('/logout');
@@ -120,18 +140,37 @@ const roleBadge = computed(() => {
 
                     <!-- Group with children -->
                     <div v-else>
-                        <div class="px-3 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                            {{ item.name }}
-                        </div>
-                        <Link
-                            v-for="child in item.children"
-                            :key="child.name"
-                            :href="child.href"
-                            class="flex items-center pl-8 pr-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
-                            :class="{ 'bg-gray-800 text-white': $page.url.startsWith(child.href) }"
+                        <button
+                            type="button"
+                            class="flex w-full items-center justify-between px-3 py-2 text-left text-xs font-bold uppercase tracking-wider text-gray-500 hover:text-gray-300"
+                            :aria-expanded="expandedSections[item.name]"
+                            @click="toggleSection(item.name)"
                         >
-                            {{ child.name }}
-                        </Link>
+                            {{ item.name }}
+                            <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                class="h-4 w-4 transition-transform"
+                                :class="{ 'rotate-180': expandedSections[item.name] }"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                aria-hidden="true"
+                            >
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7" />
+                            </svg>
+                        </button>
+                        <div v-if="expandedSections[item.name]" class="space-y-1">
+                            <Link
+                                v-for="child in item.children"
+                                :key="child.name"
+                                :href="child.href"
+                                class="flex items-center pl-8 pr-3 py-2 text-sm font-medium rounded-lg text-gray-300 hover:bg-gray-800 hover:text-white transition-colors"
+                                :class="{ 'bg-gray-800 text-white': $page.url.startsWith(child.href) }"
+                            >
+                                {{ child.name }}
+                            </Link>
+                        </div>
                     </div>
                 </template>
             </nav>

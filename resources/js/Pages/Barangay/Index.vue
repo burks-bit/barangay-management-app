@@ -31,8 +31,8 @@ const destroy = (profile) => {
                     <p class="text-sm text-gray-500 mt-1">{{ profile.address || 'No address' }}</p>
                     <p class="text-xs text-gray-400 mt-2">{{ profile.officials_count }} officials</p>
                     <div class="mt-4 flex gap-2">
-                        <Link :href="`/barangay/${profile.id}`" class="px-3 py-1.5 bg-blue-50 text-blue-700 rounded-lg text-xs font-medium hover:bg-blue-100">View</Link>
-                        <Link :href="`/barangay/${profile.id}/edit`" class="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-lg text-xs font-medium hover:bg-indigo-100">Edit</Link>
+                        <Link :href="`/barangay/${profile.id}`" class="action-link text-blue-700">View</Link>
+                        <Link :href="`/barangay/${profile.id}/edit`" class="action-link text-indigo-700">Edit</Link>
                         <button @click="destroy(profile)" class="px-3 py-1.5 bg-red-50 text-red-700 rounded-lg text-xs font-medium hover:bg-red-100">Delete</button>
                     </div>
                 </article>

@@ -12,12 +12,12 @@ class BarangaySeeder extends Seeder
     {
         // Create Barangay Profile
         $barangayProfile = BarangayProfile::create([
-            'name' => 'Barangay San Isidro',
+            'name' => 'Santisimo Rosario',
             'description' => 'A peaceful and progressive barangay committed to the welfare of its residents.',
             'mission' => 'To provide efficient and transparent governance, ensuring the safety, health, and well-being of every resident through responsive programs and services.',
             'vision' => 'A peaceful, progressive, and resilient barangay where every resident enjoys a high quality of life, equal opportunities, and strong community spirit.',
-            'address' => 'Barangay Hall, Purok 1, San Isidro, Philippines',
-            'about' => 'Barangay San Isidro is a vibrant community composed of five puroks with active community participation. We are committed to delivering basic services, maintaining peace and order, and fostering community development.',
+            'address' => 'Barangay Hall, Santisimo Rosario, San Pablo City, Laguna',
+            'about' => 'Barangay Santisimo Rosario in San Pablo City, Laguna is a vibrant community composed of five puroks with active community participation. We are committed to delivering basic services, maintaining peace and order, and fostering community development.',
             'is_active' => true,
         ]);
 

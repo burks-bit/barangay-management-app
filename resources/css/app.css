@@ -69,3 +69,25 @@
 .scrollbar-hidden::-webkit-scrollbar {
     display: none;
 }
+
+.action-link {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgb(29 78 216 / 0.2);
+    border-radius: 0.5rem;
+    padding: 0.375rem 0.625rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    line-height: 1.25rem;
+    transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
+}
+
+.action-link:hover {
+    background-color: rgb(239 246 255);
+    border-color: rgb(29 78 216 / 0.4);
+}
+
+.action-link:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
+}
