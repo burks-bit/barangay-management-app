@@ -82,6 +82,22 @@
     transition: background-color 150ms ease, border-color 150ms ease, color 150ms ease, box-shadow 150ms ease;
 }
 
+.icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.375rem;
+    color: #4b5563;
+    background: #f3f4f6;
+}
+
+.icon-button:hover {
+    color: #1d4ed8;
+    background: #dbeafe;
+}
+
 .action-link:hover {
     background-color: rgb(239 246 255);
     border-color: rgb(29 78 216 / 0.4);

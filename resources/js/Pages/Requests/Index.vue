@@ -2,14 +2,24 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
-import { Head, Link, router } from '@inertiajs/vue3';
-import { ref, watch } from 'vue';
+import { Head, Link, router, usePage } from '@inertiajs/vue3';
+import { computed, ref, watch } from 'vue';
 
 const props = defineProps({
     requests: Object,
     filters: Object,
     requestTypes: Array,
 });
+
+const page = usePage();
+const permissions = computed(() => page.props.auth?.permissions || []);
+const canCreateWalkIn = computed(() => permissions.value.includes('process requests'));
+
+const requesterName = (request) => {
+    const profile = request.requester?.member_profile || request.resident;
+    if (profile) return `${profile.first_name} ${profile.last_name}`.trim();
+    return request.requester?.name || '-';
+};
 
 const search = ref(props.filters.search || '');
 const status = ref(props.filters.status || '');
@@ -41,9 +51,21 @@ const formatDate = (date) => {
         <Head title="Service Requests" />
 
         <div class="space-y-4">
-            <div>
-                <h1 class="text-xl font-bold text-gray-900">Service Requests</h1>
-                <p class="text-sm text-gray-500">Process and track barangay document requests</p>
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <h1 class="text-xl font-bold text-gray-900">Service Requests</h1>
+                    <p class="text-sm text-gray-500">Process and track barangay document requests</p>
+                </div>
+                <Link
+                    v-if="canCreateWalkIn"
+                    href="/requests/create"
+                    class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 whitespace-nowrap"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    New Walk-in Request
+                </Link>
             </div>
 
             <!-- Filters -->
@@ -89,9 +111,17 @@ const formatDate = (date) => {
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-100">
                             <tr v-for="request in requests.data" :key="request.id" class="hover:bg-gray-50 transition-colors">
-                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">{{ request.tracking_number }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-600">
+                                    {{ request.tracking_number }}
+                                    <span
+                                        v-if="request.source === 'walk_in'"
+                                        class="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-amber-100 text-amber-700"
+                                    >
+                                        Walk-in
+                                    </span>
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                    {{ request.requester?.member_profile?.first_name }} {{ request.requester?.member_profile?.last_name }}
+                                    {{ requesterName(request) }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">{{ request.request_type?.name }}</td>
                                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ formatDate(request.submitted_at) }}</td>

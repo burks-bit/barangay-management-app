@@ -3,6 +3,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import StatusBadge from '@/Components/StatusBadge.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
+import { Download, Eye, X } from 'lucide-vue-next';
 import { ref, watch } from 'vue';
 
 const props = defineProps({
@@ -11,6 +12,7 @@ const props = defineProps({
 });
 
 const status = ref(props.filters.status || '');
+const selectedDocument = ref(null);
 
 let debounceTimer = null;
 watch(status, () => {
@@ -72,12 +74,22 @@ const formatDate = (date) => {
                             <div class="text-right flex-shrink-0 space-y-2">
                                 <StatusBadge :status="request.status" />
                                 <p class="text-xs text-gray-400">{{ formatDate(request.submitted_at) }}</p>
+                                <div v-if="request.status === 'released'" class="flex justify-end gap-2">
+                                    <button type="button" title="View document" aria-label="View document" class="icon-button" @click="selectedDocument = request"><Eye class="h-4 w-4" /></button>
+                                    <a :href="`/requests/${request.id}/download`" title="Download document" aria-label="Download document" class="icon-button"><Download class="h-4 w-4" /></a>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
                 <p v-else class="text-sm text-gray-400 text-center py-12">No requests yet. Create your first request!</p>
                 <Pagination :links="requests.links" />
+            </div>
+            <div v-if="selectedDocument" class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" @click.self="selectedDocument = null">
+                <div class="max-h-[85vh] w-full max-w-3xl overflow-hidden rounded-xl bg-white shadow-xl">
+                    <div class="flex items-center justify-between border-b border-gray-100 px-6 py-4"><h2 class="font-semibold text-gray-900">{{ selectedDocument.request_type?.name }}</h2><button type="button" title="Close" aria-label="Close" class="icon-button" @click="selectedDocument = null"><X class="h-4 w-4" /></button></div>
+                    <div class="prose max-w-none overflow-y-auto p-6 text-sm" v-html="selectedDocument.document_content"></div>
+                </div>
             </div>
         </div>
     </AuthenticatedLayout>

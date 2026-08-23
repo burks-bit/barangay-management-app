@@ -14,6 +14,8 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\ServiceRequestController;
+use App\Http\Controllers\RequestTypeController;
+use App\Http\Controllers\UserController;
 use App\Models\Announcement;
 use App\Models\Incident;
 use Inertia\Inertia;
@@ -44,6 +46,7 @@ Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'show'])->name('profile.show');
+    Route::get('/requests/{service_request}/download', [ServiceRequestController::class, 'download'])->name('requests.download');
     Route::post('/notifications/{notification}/read', [NotificationController::class, 'read'])->name('notifications.read');
 
     Route::post('/evacuation-centers/select', [DisasterController::class, 'selectEvacuationCenter'])->name('evacuation-centers.select');
@@ -66,6 +69,11 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/barangay/{barangay}/officials', [BarangayProfileController::class, 'storeOfficial'])->name('barangay.officials.store');
         Route::put('/barangay/{barangay}/officials/{official}', [BarangayProfileController::class, 'updateOfficial'])->name('barangay.officials.update');
         Route::delete('/barangay/{barangay}/officials/{official}', [BarangayProfileController::class, 'destroyOfficial'])->name('barangay.officials.destroy');
+    });
+
+    Route::middleware('can:manage users')->group(function () {
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::put('/users/{user}/role', [UserController::class, 'updateRole'])->name('users.role');
     });
 
     // Households (admin management)
@@ -164,12 +172,26 @@ Route::middleware(['auth'])->group(function () {
     // Service Requests (admin/moderator management)
     Route::middleware('can:view requests')->group(function () {
         Route::get('/requests', [ServiceRequestController::class, 'index'])->name('requests.index');
+        // Walk-in: staff encodes a request on behalf of a resident (must be
+        // registered before the {service_request} wildcard route).
+        Route::get('/requests/create', [ServiceRequestController::class, 'createWalkIn'])->name('requests.create')->middleware('can:process requests');
+        Route::post('/requests', [ServiceRequestController::class, 'storeWalkIn'])->name('requests.store')->middleware('can:process requests');
         Route::get('/requests/{service_request}', [ServiceRequestController::class, 'show'])->name('requests.show');
+        Route::get('/requests/{service_request}/preview', [ServiceRequestController::class, 'download'])->name('requests.preview');
         Route::post('/requests/{service_request}/assign', [ServiceRequestController::class, 'assign'])->name('requests.assign')->middleware('can:process requests');
         Route::post('/requests/{service_request}/process', [ServiceRequestController::class, 'process'])->name('requests.process')->middleware('can:process requests');
         Route::post('/requests/{service_request}/approve', [ServiceRequestController::class, 'approve'])->name('requests.approve')->middleware('can:approve requests');
         Route::post('/requests/{service_request}/reject', [ServiceRequestController::class, 'reject'])->name('requests.reject')->middleware('can:reject requests');
+        Route::post('/requests/{service_request}/encode', [ServiceRequestController::class, 'encode'])->name('requests.encode')->middleware('can:process requests');
+        Route::post('/requests/{service_request}/release', [ServiceRequestController::class, 'release'])->name('requests.release')->middleware('can:approve requests');
         Route::delete('/requests/{service_request}', [ServiceRequestController::class, 'destroy'])->name('requests.destroy')->middleware('can:delete requests');
+    });
+
+    Route::middleware('role:admin|moderator')->group(function () {
+        Route::get('/request-types', [RequestTypeController::class, 'index'])->name('request-types.index');
+        Route::post('/request-types', [RequestTypeController::class, 'store'])->name('request-types.store');
+        Route::put('/request-types/{request_type}', [RequestTypeController::class, 'update'])->name('request-types.update');
+        Route::delete('/request-types/{request_type}', [RequestTypeController::class, 'destroy'])->name('request-types.destroy');
     });
 
     // Member's own requests

@@ -19,6 +19,12 @@ const formatDate = (date) => {
         day: 'numeric',
     });
 };
+
+const requesterName = (request) => {
+    const profile = request.requester?.member_profile || request.resident;
+    if (profile) return `${profile.first_name} ${profile.last_name}`.trim();
+    return request.requester?.name || '-';
+};
 </script>
 
 <template>
@@ -91,7 +97,7 @@ const formatDate = (date) => {
                                     <p class="text-sm font-medium text-gray-900 truncate">{{ request.request_type?.name }}</p>
                                     <p class="text-xs text-gray-500 mt-0.5">
                                         {{ request.tracking_number }} &middot;
-                                        {{ request.requester?.member_profile?.first_name }} {{ request.requester?.member_profile?.last_name }}
+                                        {{ requesterName(request) }}
                                     </p>
                                 </div>
                                 <span class="text-xs text-gray-400 whitespace-nowrap ml-2">{{ formatDate(request.submitted_at) }}</span>

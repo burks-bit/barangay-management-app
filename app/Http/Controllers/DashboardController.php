@@ -127,7 +127,7 @@ class DashboardController extends Controller
             ->take(5)
             ->get();
 
-        $recentRequests = ServiceRequest::with(['requester.memberProfile', 'requestType'])
+        $recentRequests = ServiceRequest::with(['requester.memberProfile', 'resident', 'requestType'])
             ->whereIn('status', ['submitted', 'for_verification'])
             ->latest()
             ->take(5)

@@ -131,6 +131,8 @@ class RoleAndPermissionSeeder extends Seeder
             'create requests',
             'update requests',
             'process requests',
+            'approve requests',
+            'reject requests',
 
             // Calamities
             'view calamities',
@@ -169,6 +171,9 @@ class RoleAndPermissionSeeder extends Seeder
         // Member permissions
         $memberPermissions = [
             'view dashboard',
+            'view requests',
+            'view complaints',
+            'view assistance',
             'create complaints',
             'create requests',
             'create assistance',
