@@ -3,6 +3,12 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import { Head, Link, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Plus } from 'lucide-vue-next';
 
 const props = defineProps({
     households: Object,
@@ -32,50 +38,50 @@ watch([search, purokId], () => {
         <div class="space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900">Households</h1>
-                    <p class="text-sm text-gray-500 mt-1">View registered household records.</p>
+                    <h1 class="text-xl font-bold text-foreground">Households</h1>
+                    <p class="text-sm text-muted-foreground mt-1">View registered household records.</p>
                 </div>
-                <Link v-if="$page.props.auth?.permissions?.includes('create households')" href="/households/create" class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-lg font-semibold text-xs text-white uppercase tracking-wider hover:bg-blue-700 transition-colors">
-                    + Register Household
-                </Link>
+                <Button v-if="$page.props.auth?.permissions?.includes('create households')" as-child>
+                    <Link href="/households/create"><Plus class="h-4 w-4" /> Register Household</Link>
+                </Button>
             </div>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input v-model="search" type="search" placeholder="Search code, address, or head of family..." class="px-3 py-2 rounded-lg border-gray-300 shadow-sm text-sm" />
-                <select v-model="purokId" class="px-3 py-2 rounded-lg border-gray-300 shadow-sm text-sm">
-                    <option value="">All Puroks</option>
-                    <option v-for="purok in puroks" :key="purok.id" :value="purok.id">{{ purok.name }}</option>
-                </select>
-            </div>
+            <Card>
+                <CardContent class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Input v-model="search" type="search" placeholder="Search code, address, or head of family..." />
+                    <Select v-model="purokId">
+                        <option value="">All Puroks</option>
+                        <option v-for="purok in puroks" :key="purok.id" :value="purok.id">{{ purok.name }}</option>
+                    </Select>
+                </CardContent>
+            </Card>
 
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Household</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Head of family</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Address</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Members</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Contact</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="household in households.data" :key="household.id" class="hover:bg-gray-50">
-                                <td class="px-6 py-4 text-sm font-mono text-gray-900">{{ household.household_code }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-900">{{ household.head_of_family ? `${household.head_of_family.first_name} ${household.head_of_family.last_name}` : '-' }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">{{ household.address }}<span class="block text-xs text-gray-400">{{ household.purok?.name || '-' }}</span></td>
-                                <td class="px-6 py-4 text-sm text-gray-600">{{ household.members_count }}</td>
-                                <td class="px-6 py-4 text-sm text-gray-600">{{ household.contact_number || '-' }}</td>
-                            </tr>
-                            <tr v-if="!households.data.length">
-                                <td colspan="5" class="px-6 py-12 text-center text-sm text-gray-400">No households found.</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
+            <Card class="overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Household</TableHead>
+                            <TableHead>Head of family</TableHead>
+                            <TableHead>Address</TableHead>
+                            <TableHead>Members</TableHead>
+                            <TableHead>Contact</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="household in households.data" :key="household.id">
+                            <TableCell class="font-mono text-foreground">{{ household.household_code }}</TableCell>
+                            <TableCell class="text-foreground">{{ household.head_of_family ? `${household.head_of_family.first_name} ${household.head_of_family.last_name}` : '-' }}</TableCell>
+                            <TableCell class="text-muted-foreground">{{ household.address }}<span class="block text-xs text-muted-foreground">{{ household.purok?.name || '-' }}</span></TableCell>
+                            <TableCell class="text-muted-foreground">{{ household.members_count }}</TableCell>
+                            <TableCell class="text-muted-foreground">{{ household.contact_number || '-' }}</TableCell>
+                        </TableRow>
+                        <TableRow v-if="!households.data.length">
+                            <TableCell colspan="5" class="py-12 text-center text-muted-foreground">No households found.</TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
                 <Pagination :links="households.links" />
-            </div>
+            </Card>
         </div>
     </AuthenticatedLayout>
 </template>

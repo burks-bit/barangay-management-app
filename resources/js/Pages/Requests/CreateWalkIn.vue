@@ -2,6 +2,10 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
 
 const props = defineProps({
     residents: Array,
@@ -64,63 +68,62 @@ const submit = () => {
         <div class="max-w-2xl mx-auto space-y-4">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900">New Walk-in Request</h1>
-                    <p class="text-sm text-gray-500">Encode a service request on behalf of a resident who cannot apply online</p>
+                    <h1 class="text-xl font-bold text-foreground">New Walk-in Request</h1>
+                    <p class="text-sm text-muted-foreground">Encode a service request on behalf of a resident who cannot apply online</p>
                 </div>
-                <Link href="/requests" class="text-sm text-gray-500 hover:text-gray-700">&larr; Back to Requests</Link>
+                <Link href="/requests" class="text-sm text-muted-foreground hover:text-foreground">&larr; Back to Requests</Link>
             </div>
 
-            <form @submit.prevent="submit" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-5">
+            <form @submit.prevent="submit" class="bg-card rounded-xl border p-6 space-y-5">
                 <!-- Resident picker -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Resident *</label>
-                    <p class="text-xs text-gray-500 mb-2">Search for the resident making this request at the barangay office.</p>
+                    <label class="block text-sm font-medium text-muted-foreground">Resident *</label>
+                    <p class="text-xs text-muted-foreground mb-2">Search for the resident making this request at the barangay office.</p>
 
                     <template v-if="!selectedResident">
-                        <input
+                        <Input
                             v-model="residentSearch"
                             type="text"
                             placeholder="Search by name, resident ID, or contact number..."
                             autocomplete="off"
                             @focus="showResults = true"
                             @blur="showResults = false"
-                            class="px-3 py-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"
                         />
                         <div
                             v-if="showResults"
-                            class="mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto z-10 relative"
+                            class="mt-1 bg-card border rounded-lg shadow-lg max-h-60 overflow-y-auto z-10 relative"
                         >
                             <button
                                 v-for="resident in filteredResidents"
                                 :key="resident.id"
                                 type="button"
-                                class="w-full text-left px-4 py-2.5 hover:bg-blue-50 border-b border-gray-50 last:border-0"
+                                class="w-full text-left px-4 py-2.5 hover:bg-muted border-b last:border-0"
                                 @mousedown.prevent="selectResident(resident)"
                             >
-                                <span class="block text-sm font-medium text-gray-900">{{ fullName(resident) }}</span>
-                                <span class="block text-xs text-gray-500">
+                                <span class="block text-sm font-medium text-foreground">{{ fullName(resident) }}</span>
+                                <span class="block text-xs text-muted-foreground">
                                     ID: {{ resident.resident_id || '—' }}
                                     <template v-if="resident.purok?.name"> &middot; Purok {{ resident.purok.name }}</template>
                                     <template v-if="resident.user_id"> &middot; Has account</template>
                                 </span>
                             </button>
-                            <p v-if="!filteredResidents.length" class="px-4 py-3 text-sm text-gray-400">
+                            <p v-if="!filteredResidents.length" class="px-4 py-3 text-sm text-muted-foreground">
                                 No residents found. Add the resident first under Residents.
                             </p>
                         </div>
-                        <p v-if="form.errors.member_profile_id" class="mt-1 text-xs text-red-600">{{ form.errors.member_profile_id }}</p>
+                        <p v-if="form.errors.member_profile_id" class="mt-1 text-xs text-destructive">{{ form.errors.member_profile_id }}</p>
                     </template>
 
-                    <div v-else class="flex items-center justify-between rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
+                    <div v-else class="flex items-center justify-between rounded-lg bg-primary/5 border px-4 py-3">
                         <div>
-                            <p class="text-sm font-medium text-gray-900">{{ fullName(selectedResident) }}</p>
-                            <p class="text-xs text-gray-500">
+                            <p class="text-sm font-medium text-foreground">{{ fullName(selectedResident) }}</p>
+                            <p class="text-xs text-muted-foreground">
                                 ID: {{ selectedResident.resident_id || '—' }}
                                 <template v-if="selectedResident.purok?.name"> &middot; Purok {{ selectedResident.purok.name }}</template>
                                 <template v-if="selectedResident.user_id"> &middot; Has account (will be notified of updates)</template>
                             </p>
                         </div>
-                        <button type="button" @click="clearResident" class="text-xs font-medium text-red-600 hover:text-red-700">
+                        <button type="button" @click="clearResident" class="text-xs font-medium text-destructive hover:text-destructive/80">
                             Change
                         </button>
                     </div>
@@ -128,32 +131,27 @@ const submit = () => {
 
                 <!-- Document type -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Document Type *</label>
-                    <select v-model="form.request_type_id" required
-                        class="mt-1 px-3 py-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm">
+                    <label class="block text-sm font-medium text-muted-foreground">Document Type *</label>
+                    <Select v-model="form.request_type_id" required class="mt-1">
                         <option value="">Select a document type...</option>
                         <option v-for="type in requestTypes" :key="type.id" :value="type.id">
                             {{ type.name }} {{ type.fee > 0 ? `(₱${type.fee})` : '(Free)' }}
                         </option>
-                    </select>
-                    <p v-if="form.errors.request_type_id" class="mt-1 text-xs text-red-600">{{ form.errors.request_type_id }}</p>
+                    </Select>
+                    <p v-if="form.errors.request_type_id" class="mt-1 text-xs text-destructive">{{ form.errors.request_type_id }}</p>
                 </div>
 
                 <!-- Purpose -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Purpose *</label>
-                    <input v-model="form.purpose" type="text" required
-                        placeholder="e.g., Employment application"
-                        class="mt-1 px-3 py-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm" />
-                    <p v-if="form.errors.purpose" class="mt-1 text-xs text-red-600">{{ form.errors.purpose }}</p>
+                    <label class="block text-sm font-medium text-muted-foreground">Purpose *</label>
+                    <Input v-model="form.purpose" type="text" required placeholder="e.g., Employment application" class="mt-1" />
+                    <p v-if="form.errors.purpose" class="mt-1 text-xs text-destructive">{{ form.errors.purpose }}</p>
                 </div>
 
                 <!-- Additional details -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Additional Details</label>
-                    <textarea v-model="form.description" rows="4"
-                        placeholder="Provide any additional information that may help process this request..."
-                        class="mt-1 px-3 py-2 block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 text-sm"></textarea>
+                    <label class="block text-sm font-medium text-muted-foreground">Additional Details</label>
+                    <Textarea v-model="form.description" rows="4" placeholder="Provide any additional information that may help process this request..." class="mt-1" />
                 </div>
 
                 <div class="rounded-lg bg-amber-50 border border-amber-100 p-4">
@@ -164,13 +162,12 @@ const submit = () => {
                 </div>
 
                 <div class="flex items-center justify-end space-x-3 pt-2">
-                    <Link href="/requests" class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
-                        Cancel
-                    </Link>
-                    <button type="submit" :disabled="form.processing"
-                        class="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50">
+                    <Button variant="outline" as-child>
+                        <Link href="/requests">Cancel</Link>
+                    </Button>
+                    <Button type="submit" :disabled="form.processing">
                         {{ form.processing ? 'Creating...' : 'Create Walk-in Request' }}
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>

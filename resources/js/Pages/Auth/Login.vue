@@ -1,6 +1,7 @@
 <script setup>
-import GuestLayout from '@/Layouts/GuestLayout.vue';
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 defineProps({
     canResetPassword: Boolean,
@@ -81,7 +82,7 @@ const submit = () => {
                 </p>
                 <h1 class="font-display text-3xl sm:text-[2.15rem] font-semibold leading-tight text-[#12283F]">
                     Barangay Management
-                    <span class="block sm:inline text-[#1B3A5C]">&amp; Community Services</span>
+                    <span class="block sm:inline text-[#1B3A5C]">& Community Services</span>
                 </h1>
                 <p class="mt-3 text-sm text-[#1C2530]/70 max-w-xs">
                     Sign in to manage resident records, certificates, and community programs.
@@ -100,7 +101,7 @@ const submit = () => {
                     <form @submit.prevent="submit">
                         <div>
                             <label for="email" class="block text-sm font-medium text-[#1C2530]">Email address</label>
-                            <input
+                            <Input
                                 id="email"
                                 v-model="form.email"
                                 type="email"
@@ -108,7 +109,7 @@ const submit = () => {
                                 required
                                 autofocus
                                 autocomplete="username"
-                                class="mt-1 block w-full rounded-lg border border-[#1B3A5C]/15 px-3 py-2 shadow-sm focus:border-[#1B3A5C] focus:outline-none focus:ring-1 focus:ring-[#1B3A5C]/30 sm:text-sm"
+                                class="mt-1"
                                 placeholder="you@example.com"
                             />
                             <p v-if="form.errors.email" class="mt-2 text-sm text-[#B3261E]">{{ form.errors.email }}</p>
@@ -116,14 +117,14 @@ const submit = () => {
 
                         <div class="mt-4">
                             <label for="password" class="block text-sm font-medium text-[#1C2530]">Password</label>
-                            <input
+                            <Input
                                 id="password"
                                 v-model="form.password"
                                 type="password"
                                 name="password"
                                 required
                                 autocomplete="current-password"
-                                class="mt-1 block w-full rounded-lg border border-[#1B3A5C]/15 px-3 py-2 shadow-sm focus:border-[#1B3A5C] focus:outline-none focus:ring-1 focus:ring-[#1B3A5C]/30 sm:text-sm"
+                                class="mt-1"
                                 placeholder="••••••••"
                             />
                             <p v-if="form.errors.password" class="mt-2 text-sm text-[#B3261E]">{{ form.errors.password }}</p>
@@ -149,17 +150,13 @@ const submit = () => {
                             </Link>
                         </div>
 
-                        <button
+                        <Button
                             type="submit"
-                            class="w-full mt-6 flex justify-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-[#1B3A5C] hover:bg-[#12283F] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C89B3C] disabled:opacity-50 transition-colors"
                             :disabled="form.processing"
+                            class="w-full mt-6 bg-[#1B3A5C] hover:bg-[#12283F]"
                         >
-                            <svg v-if="form.processing" class="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                            </svg>
                             {{ form.processing ? 'Signing in...' : 'Sign in' }}
-                        </button>
+                        </Button>
                     </form>
                 </div>
             </div>

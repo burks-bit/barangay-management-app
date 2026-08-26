@@ -3,6 +3,11 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import Pagination from '@/Components/Pagination.vue';
 import { Head, router } from '@inertiajs/vue3';
 import { ref, watch } from 'vue';
+import { Input } from '@/components/ui/input';
+import { Select } from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
 
 const props = defineProps({ items: Object, categories: Array, filters: Object });
 const search = ref(props.filters.search || '');
@@ -18,16 +23,41 @@ watch([search, category], () => {
     <AuthenticatedLayout>
         <Head title="Relief Inventory" />
         <div class="space-y-4">
-            <div><h1 class="text-xl font-bold text-gray-900">Relief Inventory</h1><p class="text-sm text-gray-500 mt-1">View available relief supplies and stock levels.</p></div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-                <input v-model="search" type="search" placeholder="Search item or SKU..." class="px-3 py-2 rounded-lg border-gray-300 text-sm" />
-                <select v-model="category" class="px-3 py-2 rounded-lg border-gray-300 text-sm"><option value="">All categories</option><option v-for="itemCategory in categories" :key="itemCategory" :value="itemCategory">{{ itemCategory }}</option></select>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                <div class="overflow-x-auto"><table class="min-w-full divide-y divide-gray-200"><thead class="bg-gray-50"><tr><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Item</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Stock</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reorder level</th><th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th></tr></thead>
-                <tbody class="divide-y divide-gray-100"><tr v-for="item in items.data" :key="item.id" class="hover:bg-gray-50"><td class="px-6 py-4"><p class="text-sm font-medium text-gray-900">{{ item.name }}</p><p class="text-xs font-mono text-gray-500">{{ item.sku }} | per {{ item.unit }}</p></td><td class="px-6 py-4 text-sm text-gray-600 capitalize">{{ item.category || '-' }}</td><td class="px-6 py-4 text-sm font-medium text-gray-900">{{ item.current_stock }}</td><td class="px-6 py-4 text-sm text-gray-600">{{ item.reorder_level }}</td><td class="px-6 py-4"><span :class="item.current_stock <= item.reorder_level ? 'text-red-700 bg-red-50' : 'text-green-700 bg-green-50'" class="rounded-full px-2 py-1 text-xs font-medium">{{ item.current_stock <= item.reorder_level ? 'Low stock' : 'Available' }}</span></td></tr><tr v-if="!items.data.length"><td colspan="5" class="px-6 py-12 text-center text-sm text-gray-400">No inventory items found.</td></tr></tbody></table></div>
+            <div><h1 class="text-xl font-bold text-foreground">Relief Inventory</h1><p class="text-sm text-muted-foreground mt-1">View available relief supplies and stock levels.</p></div>
+            <Card>
+                <CardContent class="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <Input v-model="search" type="search" placeholder="Search item or SKU..." />
+                    <Select v-model="category"><option value="">All categories</option><option v-for="itemCategory in categories" :key="itemCategory" :value="itemCategory">{{ itemCategory }}</option></Select>
+                </CardContent>
+            </Card>
+            <Card class="overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Item</TableHead>
+                            <TableHead>Category</TableHead>
+                            <TableHead>Stock</TableHead>
+                            <TableHead>Reorder level</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="item in items.data" :key="item.id" class="hover:bg-muted/50">
+                            <TableCell><p class="text-sm font-medium text-foreground">{{ item.name }}</p><p class="text-xs font-mono text-muted-foreground">{{ item.sku }} | per {{ item.unit }}</p></TableCell>
+                            <TableCell class="text-muted-foreground capitalize">{{ item.category || '-' }}</TableCell>
+                            <TableCell class="font-medium text-foreground">{{ item.current_stock }}</TableCell>
+                            <TableCell class="text-muted-foreground">{{ item.reorder_level }}</TableCell>
+                            <TableCell>
+                                <Badge :class="item.current_stock <= item.reorder_level ? 'bg-red-100 text-red-700 border-red-200' : 'bg-green-100 text-green-700 border-green-200'">
+                                    {{ item.current_stock <= item.reorder_level ? 'Low stock' : 'Available' }}
+                                </Badge>
+                            </TableCell>
+                        </TableRow>
+                        <TableRow v-if="!items.data.length"><TableCell colspan="5" class="py-12 text-center text-muted-foreground">No inventory items found.</TableCell></TableRow>
+                    </TableBody>
+                </Table>
                 <Pagination :links="items.links" />
-            </div>
+            </Card>
         </div>
     </AuthenticatedLayout>
 </template>

@@ -1,6 +1,10 @@
 <script setup>
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
+import { Card, CardContent } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 
 const props = defineProps({
     users: Array,
@@ -17,30 +21,37 @@ const updateRole = (user, role) => {
         <Head title="Users and Roles" />
         <div class="space-y-4">
             <div>
-                <h1 class="text-xl font-bold text-gray-900">Users and Roles</h1>
-                <p class="text-sm text-gray-500">Manage account access for barangay users.</p>
+                <h1 class="text-xl font-bold text-foreground">Users and Roles</h1>
+                <p class="text-sm text-muted-foreground">Manage account access for barangay users.</p>
             </div>
-            <div class="overflow-hidden rounded-xl border border-gray-100 bg-white shadow-sm">
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead class="bg-gray-50 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">
-                            <tr><th class="px-6 py-3">Name</th><th class="px-6 py-3">Email</th><th class="px-6 py-3">Role</th><th class="px-6 py-3">Status</th></tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            <tr v-for="user in props.users" :key="user.id">
-                                <td class="whitespace-nowrap px-6 py-4 font-medium text-gray-900">{{ user.name }}</td>
-                                <td class="whitespace-nowrap px-6 py-4 text-gray-600">{{ user.email }}</td>
-                                <td class="px-6 py-4">
-                                    <select :value="user.roles?.[0]?.name" class="w-full max-w-40" @change="updateRole(user, $event.target.value)">
-                                        <option v-for="role in props.roles" :key="role" :value="role">{{ role }}</option>
-                                    </select>
-                                </td>
-                                <td class="px-6 py-4"><span :class="user.is_active ? 'text-green-700' : 'text-gray-400'">{{ user.is_active ? 'Active' : 'Inactive' }}</span></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+            <Card class="overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Name</TableHead>
+                            <TableHead>Email</TableHead>
+                            <TableHead>Role</TableHead>
+                            <TableHead>Status</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        <TableRow v-for="user in props.users" :key="user.id">
+                            <TableCell class="font-medium text-foreground">{{ user.name }}</TableCell>
+                            <TableCell class="text-muted-foreground">{{ user.email }}</TableCell>
+                            <TableCell>
+                                <Select :model-value="user.roles?.[0]?.name" class="w-full max-w-40" @update:model-value="(v) => updateRole(user, v)">
+                                    <option v-for="role in props.roles" :key="role" :value="role">{{ role }}</option>
+                                </Select>
+                            </TableCell>
+                            <TableCell>
+                                <Badge :class="user.is_active ? 'bg-green-100 text-green-700 border-green-200' : 'bg-gray-100 text-gray-500 border-gray-200'">
+                                    {{ user.is_active ? 'Active' : 'Inactive' }}
+                                </Badge>
+                            </TableCell>
+                        </TableRow>
+                    </TableBody>
+                </Table>
+            </Card>
         </div>
     </AuthenticatedLayout>
 </template>

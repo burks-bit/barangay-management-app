@@ -24,6 +24,10 @@
     },
     "dependencies": {
         "@ckeditor/ckeditor5-vue": "^8.2.0",
-        "ckeditor5": "^48.4.0"
+        "ckeditor5": "^48.4.0",
+        "class-variance-authority": "^0.7.1",
+        "clsx": "^2.1.1",
+        "radix-vue": "^1.9.17",
+        "tailwind-merge": "^3.6.0"
     }
 }

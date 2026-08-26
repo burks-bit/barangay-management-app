@@ -180,6 +180,7 @@ class RoleAndPermissionSeeder extends Seeder
             'view calamities',
             'view evacuation centers',
             'view incidents',
+            'create incidents',
         ];
         $member->syncPermissions($memberPermissions);
     }

@@ -2,28 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\InventoryItem;
-use App\Models\ReliefDistributionEvent;
+use App\Services\ReliefService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ReliefController extends Controller
 {
+    public function __construct(private ReliefService $relief)
+    {
+    }
+
     public function inventory(Request $request): Response
     {
-        $items = InventoryItem::withCount('distributionItems')
-            ->when($request->input('category'), fn ($query, $category) => $query->where('category', $category))
-            ->when($request->input('search'), function ($query, $search) {
-                $query->where(fn ($items) => $items->where('name', 'like', "%{$search}%")->orWhere('sku', 'like', "%{$search}%"));
-            })
-            ->orderBy('name')
-            ->paginate(15)
-            ->withQueryString();
-
         return Inertia::render('ReliefInventory/Index', [
-            'items' => $items,
-            'categories' => InventoryItem::whereNotNull('category')->distinct()->orderBy('category')->pluck('category'),
+            'items' => $this->relief->inventory($request),
+            'categories' => $this->relief->categories(),
             'filters' => $request->only(['category', 'search']),
         ]);
     }
@@ -31,10 +25,7 @@ class ReliefController extends Controller
     public function distributions(): Response
     {
         return Inertia::render('ReliefDistributions/Index', [
-            'events' => ReliefDistributionEvent::with(['calamity', 'items.inventoryItem'])
-                ->withCount('recipients')
-                ->latest('distribution_date')
-                ->get(),
+            'events' => $this->relief->distributions(),
         ]);
     }
 }

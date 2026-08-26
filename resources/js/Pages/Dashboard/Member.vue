@@ -4,6 +4,8 @@ import StatusBadge from '@/Components/StatusBadge.vue';
 import WeatherCard from '@/Components/WeatherCard.vue';
 import { computed } from 'vue';
 import { usePage } from '@inertiajs/vue3';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FileText, AlertCircle, HeartHandshake, AlertTriangle } from 'lucide-vue-next';
 
 const props = defineProps({
     myRequests: Array,
@@ -13,7 +15,6 @@ const props = defineProps({
     notifications: Array,
     unreadCount: Number,
 });
-
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user ?? null);
@@ -70,9 +71,7 @@ const isAlarmingAnnouncement = (announcement) => {
                     :class="{ 'alarm-announcement': isAlarmingAnnouncement(announcement) }"
                 >
                     <div class="flex items-start">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-red-500 flex-shrink-0" :class="{ 'alarm-icon': isAlarmingAnnouncement(announcement) }" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                        </svg>
+                        <AlertTriangle class="w-6 h-6 text-red-500 flex-shrink-0" :class="{ 'alarm-icon': isAlarmingAnnouncement(announcement) }" />
                         <div class="ml-3">
                             <div class="flex items-center gap-2">
                                 <h3 class="text-base font-bold text-red-800">{{ announcement.title }}</h3>
@@ -87,106 +86,106 @@ const isAlarmingAnnouncement = (announcement) => {
 
             <!-- Quick actions -->
             <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <a href="/my-requests/create" class="flex items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <a href="/my-requests/create" class="flex items-center p-4 bg-card rounded-xl border shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-purple-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        <FileText class="w-5 h-5 text-purple-600" />
                     </div>
-                    <span class="ml-3 text-sm font-medium text-gray-900">New Request</span>
+                    <span class="ml-3 text-sm font-medium text-foreground">New Request</span>
                 </a>
-                <a href="/my-complaints/create" class="flex items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <a href="/my-complaints/create" class="flex items-center p-4 bg-card rounded-xl border shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-orange-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M5.07 19H19a2 2 0 001.74-3L13.74 4a2 2 0 00-3.48 0L3.33 16a2 2 0 001.74 3z" /></svg>
+                        <AlertCircle class="w-5 h-5 text-orange-600" />
                     </div>
-                    <span class="ml-3 text-sm font-medium text-gray-900">File Complaint</span>
+                    <span class="ml-3 text-sm font-medium text-foreground">File Complaint</span>
                 </a>
-                <a href="/my-assistance/create" class="flex items-center p-4 bg-white rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <a href="/my-assistance/create" class="flex items-center p-4 bg-card rounded-xl border shadow-sm hover:shadow-md transition-shadow">
                     <div class="flex items-center justify-center w-10 h-10 rounded-lg bg-green-100">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" /></svg>
+                        <HeartHandshake class="w-5 h-5 text-green-600" />
                     </div>
-                    <span class="ml-3 text-sm font-medium text-gray-900">Request Assistance</span>
+                    <span class="ml-3 text-sm font-medium text-foreground">Request Assistance</span>
                 </a>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- My Requests -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="text-base font-semibold text-gray-900">My Requests</h3>
-                        <a href="/my-requests" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View all</a>
-                    </div>
-                    <div v-if="myRequests.length" class="divide-y divide-gray-100">
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b flex flex-row items-center justify-between space-y-0">
+                        <CardTitle class="text-base">My Requests</CardTitle>
+                        <a href="/my-requests" class="text-sm text-primary hover:text-primary/80 font-medium">View all</a>
+                    </CardHeader>
+                    <CardContent v-if="myRequests.length" class="divide-y divide-border p-0">
                         <div v-for="request in myRequests" :key="request.id" class="px-6 py-4">
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900">{{ request.request_type?.name }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ request.tracking_number }}</p>
+                                    <p class="text-sm font-medium text-foreground">{{ request.request_type?.name }}</p>
+                                    <p class="text-xs text-muted-foreground mt-0.5">{{ request.tracking_number }}</p>
                                 </div>
                                 <StatusBadge :status="request.status" />
                             </div>
                         </div>
-                    </div>
-                    <p v-else class="text-sm text-gray-400 text-center py-8">No requests yet</p>
-                </div>
+                    </CardContent>
+                    <p v-else class="text-sm text-muted-foreground text-center py-8">No requests yet</p>
+                </Card>
 
                 <!-- My Complaints -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="text-base font-semibold text-gray-900">My Complaints</h3>
-                        <a href="/my-complaints" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View all</a>
-                    </div>
-                    <div v-if="myComplaints.length" class="divide-y divide-gray-100">
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b flex flex-row items-center justify-between space-y-0">
+                        <CardTitle class="text-base">My Complaints</CardTitle>
+                        <a href="/my-complaints" class="text-sm text-primary hover:text-primary/80 font-medium">View all</a>
+                    </CardHeader>
+                    <CardContent v-if="myComplaints.length" class="divide-y divide-border p-0">
                         <div v-for="complaint in myComplaints" :key="complaint.id" class="px-6 py-4">
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900">{{ complaint.subject }}</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ complaint.complaint_code }}</p>
+                                    <p class="text-sm font-medium text-foreground">{{ complaint.subject }}</p>
+                                    <p class="text-xs text-muted-foreground mt-0.5">{{ complaint.complaint_code }}</p>
                                 </div>
                                 <StatusBadge :status="complaint.status" />
                             </div>
                         </div>
-                    </div>
-                    <p v-else class="text-sm text-gray-400 text-center py-8">No complaints yet</p>
-                </div>
+                    </CardContent>
+                    <p v-else class="text-sm text-muted-foreground text-center py-8">No complaints yet</p>
+                </Card>
 
                 <!-- My Assistance -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                        <h3 class="text-base font-semibold text-gray-900">My Assistance Requests</h3>
-                        <a href="/my-assistance" class="text-sm text-blue-600 hover:text-blue-800 font-medium">View all</a>
-                    </div>
-                    <div v-if="myAssistance.length" class="divide-y divide-gray-100">
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b flex flex-row items-center justify-between space-y-0">
+                        <CardTitle class="text-base">My Assistance Requests</CardTitle>
+                        <a href="/my-assistance" class="text-sm text-primary hover:text-primary/80 font-medium">View all</a>
+                    </CardHeader>
+                    <CardContent v-if="myAssistance.length" class="divide-y divide-border p-0">
                         <div v-for="assistance in myAssistance" :key="assistance.id" class="px-6 py-4">
                             <div class="flex items-start justify-between">
                                 <div>
-                                    <p class="text-sm font-medium text-gray-900">{{ assistance.assistance_type?.name }} Assistance</p>
-                                    <p class="text-xs text-gray-500 mt-0.5">{{ assistance.assistance_code }}</p>
+                                    <p class="text-sm font-medium text-foreground">{{ assistance.assistance_type?.name }} Assistance</p>
+                                    <p class="text-xs text-muted-foreground mt-0.5">{{ assistance.assistance_code }}</p>
                                 </div>
                                 <StatusBadge :status="assistance.status" />
                             </div>
                         </div>
-                    </div>
-                    <p v-else class="text-sm text-gray-400 text-center py-8">No assistance requests yet</p>
-                </div>
+                    </CardContent>
+                    <p v-else class="text-sm text-muted-foreground text-center py-8">No assistance requests yet</p>
+                </Card>
 
                 <!-- Announcements -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-                    <div class="px-6 py-4 border-b border-gray-100">
-                        <h3 class="text-base font-semibold text-gray-900">Announcements</h3>
-                    </div>
-                    <div v-if="announcements.length" class="divide-y divide-gray-100 max-h-80 overflow-y-auto">
+                <Card class="overflow-hidden">
+                    <CardHeader class="border-b">
+                        <CardTitle class="text-base">Announcements</CardTitle>
+                    </CardHeader>
+                    <CardContent v-if="announcements.length" class="divide-y divide-border max-h-80 overflow-y-auto p-0">
                         <div v-for="announcement in announcements" :key="announcement.id" class="px-6 py-4">
                             <div class="flex items-start justify-between gap-2">
                                 <div class="min-w-0">
-                                    <p class="text-sm font-medium text-gray-900">{{ announcement.title }}</p>
-                                    <p class="text-xs text-gray-500 mt-1 line-clamp-2">{{ announcement.content }}</p>
-                                    <p class="text-xs text-gray-400 mt-1">{{ formatDate(announcement.published_at) }}</p>
+                                    <p class="text-sm font-medium text-foreground">{{ announcement.title }}</p>
+                                    <p class="text-xs text-muted-foreground mt-1 line-clamp-2">{{ announcement.content }}</p>
+                                    <p class="text-xs text-muted-foreground mt-1">{{ formatDate(announcement.published_at) }}</p>
                                 </div>
                                 <StatusBadge :status="announcement.priority === 'emergency' ? 'urgent' : announcement.priority === 'important' ? 'high' : 'low'" />
                             </div>
                         </div>
-                    </div>
-                    <p v-else class="text-sm text-gray-400 text-center py-8">No announcements</p>
-                </div>
+                    </CardContent>
+                    <p v-else class="text-sm text-muted-foreground text-center py-8">No announcements</p>
+                </Card>
             </div>
         </div>
     </AuthenticatedLayout>

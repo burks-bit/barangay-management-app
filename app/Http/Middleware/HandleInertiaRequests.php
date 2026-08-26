@@ -43,6 +43,9 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => $user ? $user->getAllPermissions()->pluck('name')->values() : [],
                 'notifications' => $user ? $user->notifications()->latest()->take(10)->get() : [],
                 'unread_notifications_count' => $user ? $user->unreadNotifications()->count() : 0,
+                // Evaluated lazily per navigation (no polling): count of
+                // announcements published since the user last viewed them.
+                'new_announcements_count' => fn () => $user?->newAnnouncementsCount() ?? 0,
             ],
             'barangay' => BarangayProfile::where('is_active', true)
                 ->with(['officials' => fn ($q) => $q->where('is_active', true)])

@@ -1,6 +1,8 @@
 <script setup>
 import { CloudSun, LocateFixed, RefreshCw, Wind } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 
 const loading = ref(false);
 const error = ref('');
@@ -79,21 +81,23 @@ onMounted(loadWeather);
 </script>
 
 <template>
-    <section class="weather-card rounded-xl border border-sky-200 bg-sky-50 p-5 shadow-sm">
-        <div class="flex items-start justify-between gap-4">
-            <div>
-                <p class="text-xs font-semibold uppercase tracking-wider text-sky-700">Local weather</p>
-                <h2 class="mt-1 text-base font-semibold text-slate-900">Weather near your location</h2>
-                <p class="mt-1 flex items-center gap-1 text-xs text-slate-500"><LocateFixed class="h-3.5 w-3.5" /> {{ coordinates }}</p>
+    <Card class="border-sky-200 bg-sky-50">
+        <CardContent class="p-5">
+            <div class="flex items-start justify-between gap-4">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-sky-700">Local weather</p>
+                    <h2 class="mt-1 text-base font-semibold text-slate-900">Weather near your location</h2>
+                    <p class="mt-1 flex items-center gap-1 text-xs text-slate-500"><LocateFixed class="h-3.5 w-3.5" /> {{ coordinates }}</p>
+                </div>
+                <CloudSun class="h-9 w-9 text-sky-600" aria-hidden="true" />
             </div>
-            <CloudSun class="h-9 w-9 text-sky-600" aria-hidden="true" />
-        </div>
 
-        <div v-if="loading" class="mt-5 flex items-center gap-2 text-sm text-slate-600"><RefreshCw class="h-4 w-4 animate-spin" /> Loading current conditions...</div>
-        <div v-else-if="weather" class="mt-5 flex flex-wrap items-end gap-x-6 gap-y-3">
-            <div><p class="text-4xl font-semibold tracking-tight text-slate-900">{{ temperature }}</p><p class="text-sm font-medium text-sky-800">{{ description }}</p></div>
-            <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-600"><div><dt>Feels like</dt><dd class="font-semibold text-slate-900">{{ Math.round(weather.apparent_temperature) }}°C</dd></div><div><dt>Humidity</dt><dd class="font-semibold text-slate-900">{{ weather.relative_humidity_2m }}%</dd></div><div><dt>Wind</dt><dd class="flex items-center gap-1 font-semibold text-slate-900"><Wind class="h-3.5 w-3.5" /> {{ Math.round(weather.wind_speed_10m) }} km/h</dd></div></dl>
-        </div>
-        <div v-else class="mt-5 flex items-center justify-between gap-3"><p class="text-sm text-slate-600">{{ error }}</p><button type="button" @click="loadWeather" class="inline-flex shrink-0 items-center gap-1 bg-sky-600 px-3 py-2 text-xs text-white hover:bg-sky-700"><RefreshCw class="h-3.5 w-3.5" /> Retry</button></div>
-    </section>
+            <div v-if="loading" class="mt-5 flex items-center gap-2 text-sm text-slate-600"><RefreshCw class="h-4 w-4 animate-spin" /> Loading current conditions...</div>
+            <div v-else-if="weather" class="mt-5 flex flex-wrap items-end gap-x-6 gap-y-3">
+                <div><p class="text-4xl font-semibold tracking-tight text-slate-900">{{ temperature }}</p><p class="text-sm font-medium text-sky-800">{{ description }}</p></div>
+                <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-xs text-slate-600"><div><dt>Feels like</dt><dd class="font-semibold text-slate-900">{{ Math.round(weather.apparent_temperature) }}°C</dd></div><div><dt>Humidity</dt><dd class="font-semibold text-slate-900">{{ weather.relative_humidity_2m }}%</dd></div><div><dt>Wind</dt><dd class="flex items-center gap-1 font-semibold text-slate-900"><Wind class="h-3.5 w-3.5" /> {{ Math.round(weather.wind_speed_10m) }} km/h</dd></div></dl>
+            </div>
+            <div v-else class="mt-5 flex items-center justify-between gap-3"><p class="text-sm text-slate-600">{{ error }}</p><Button type="button" variant="secondary" size="sm" @click="loadWeather" class="shrink-0"><RefreshCw class="h-3.5 w-3.5" /> Retry</Button></div>
+        </CardContent>
+    </Card>
 </template>

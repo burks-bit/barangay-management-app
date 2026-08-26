@@ -31,7 +31,24 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'announcements_seen_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Number of published announcements posted after the user last viewed
+     * the Announcements page. Used for the sidebar badge (no polling).
+     */
+    public function newAnnouncementsCount(): int
+    {
+        return Announcement::where('status', 'published')
+            ->when($this->announcements_seen_at, fn ($q, $seen) => $q->where('published_at', '>', $seen))
+            ->count();
+    }
+
+    public function markAnnouncementsSeen(): void
+    {
+        $this->forceFill(['announcements_seen_at' => now()])->save();
     }
 
     public function memberProfile(): HasOne

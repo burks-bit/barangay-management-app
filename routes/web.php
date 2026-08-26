@@ -1,17 +1,23 @@
 <?php
 
+use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\AssistanceController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BarangayProfileController;
 use App\Http\Controllers\CalamityController;
 use App\Http\Controllers\ComplaintController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HouseholdController;
 use App\Http\Controllers\DisasterController;
+use App\Http\Controllers\IncidentBlotterController;
 use App\Http\Controllers\EvacuationCenterController;
+use App\Http\Controllers\IncidentController;
 use App\Http\Controllers\ReliefController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ProgramController;
+use App\Http\Controllers\ReportBuilderController;
 use App\Http\Controllers\ResidentController;
 use App\Http\Controllers\ServiceRequestController;
 use App\Http\Controllers\RequestTypeController;
@@ -19,6 +25,7 @@ use App\Http\Controllers\UserController;
 use App\Models\Announcement;
 use App\Models\Incident;
 use Inertia\Inertia;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -97,6 +104,7 @@ Route::middleware(['auth'])->group(function () {
     // Assistance
     Route::middleware('can:view assistance')->group(function () {
         Route::get('/assistance', [AssistanceController::class, 'index'])->name('assistance.index');
+        Route::post('/assistance/{assistance_request}/status', [AssistanceController::class, 'updateStatus'])->name('assistance.status');
     });
 
     Route::middleware('can:create assistance')->group(function () {
@@ -114,14 +122,49 @@ Route::middleware(['auth'])->group(function () {
         ]);
     })->name('announcements.index');
 
-    Route::get('/incidents', function () {
-        return Inertia::render('Incidents/Index', [
-            'incidents' => Incident::with('purok')
-                ->whereNotIn('status', ['resolved', 'closed'])
-                ->latest('incident_datetime')
-                ->get(),
-        ]);
-    })->name('incidents.index');
+    // Mark announcements as seen (clears the sidebar badge, no polling).
+    Route::post('/announcements/seen', function (Request $request) {
+        $request->user()->markAnnouncementsSeen();
+        return back();
+    })->name('announcements.seen');
+
+    // Announcements management (admin/moderator)
+    Route::middleware('role:admin|moderator')->group(function () {
+        Route::get('/announcements/manage', [AnnouncementController::class, 'index'])->name('announcements.manage');
+        Route::post('/announcements', [AnnouncementController::class, 'store'])->name('announcements.store');
+        Route::put('/announcements/{announcement}', [AnnouncementController::class, 'update'])->name('announcements.update');
+        Route::post('/announcements/{announcement}/publish', [AnnouncementController::class, 'publish'])->name('announcements.publish');
+        Route::post('/announcements/{announcement}/archive', [AnnouncementController::class, 'archive'])->name('announcements.archive');
+        Route::delete('/announcements/{announcement}', [AnnouncementController::class, 'destroy'])->name('announcements.destroy');
+    });
+
+    // Incidents (admin/moderator view of all incidents)
+    Route::middleware('can:view incidents')->group(function () {
+        Route::get('/incidents', [IncidentController::class, 'index'])->name('incidents.index');
+        Route::get('/incidents/{incident}', [IncidentController::class, 'show'])->name('incidents.show');
+    });
+
+    Route::middleware('can:update incidents')->group(function () {
+        Route::post('/incidents/{incident}/status', [IncidentController::class, 'updateStatus'])->name('incidents.status');
+    });
+
+    // Incident Blotter (official barangay blotter logbook — admin/moderator)
+    Route::middleware('role:admin|moderator')->group(function () {
+        Route::get('/incidents/blotters', [IncidentBlotterController::class, 'index'])->name('incidents.blotter.index');
+        Route::get('/incidents/blotters/create', [IncidentBlotterController::class, 'create'])->name('incidents.blotter.create');
+        Route::post('/incidents/blotters', [IncidentBlotterController::class, 'store'])->name('incidents.blotter.store');
+        Route::get('/incidents/blotters/{blotter}', [IncidentBlotterController::class, 'show'])->name('incidents.blotter.show');
+        Route::post('/incidents/blotters/{blotter}/status', [IncidentBlotterController::class, 'updateStatus'])->name('incidents.blotter.status');
+        Route::delete('/incidents/blotters/{blotter}', [IncidentBlotterController::class, 'destroy'])->name('incidents.blotter.destroy');
+    });
+
+    // Member's own incidents
+    Route::middleware('can:view incidents')->group(function () {
+        Route::get('/my-incidents', [IncidentController::class, 'myIncidents'])->name('my-incidents');
+        Route::get('/my-incidents/create', [IncidentController::class, 'create'])->name('my-incidents.create');
+        Route::post('/my-incidents', [IncidentController::class, 'store'])->name('my-incidents.store');
+        Route::get('/my-incidents/{incident}', [IncidentController::class, 'myShow'])->name('my-incidents.show');
+    });
 
     // Calamities (admin/moderator CRUD)
     Route::middleware('can:view calamities')->group(function () {
@@ -192,6 +235,27 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/request-types', [RequestTypeController::class, 'store'])->name('request-types.store');
         Route::put('/request-types/{request_type}', [RequestTypeController::class, 'update'])->name('request-types.update');
         Route::delete('/request-types/{request_type}', [RequestTypeController::class, 'destroy'])->name('request-types.destroy');
+
+        // Programs management (4Ps, TUPAD, etc.)
+        Route::get('/programs', [ProgramController::class, 'index'])->name('programs.index');
+        Route::post('/programs', [ProgramController::class, 'store'])->name('programs.store');
+        Route::get('/programs/{program}', [ProgramController::class, 'show'])->name('programs.show');
+        Route::put('/programs/{program}', [ProgramController::class, 'update'])->name('programs.update');
+        Route::delete('/programs/{program}', [ProgramController::class, 'destroy'])->name('programs.destroy');
+        Route::post('/programs/{program}/enrollments', [ProgramController::class, 'enroll'])->name('programs.enrollments.store');
+        Route::put('/programs/{program}/enrollments/{enrollment}', [ProgramController::class, 'updateEnrollment'])->name('programs.enrollments.update');
+        Route::delete('/programs/{program}/enrollments/{enrollment}', [ProgramController::class, 'destroyEnrollment'])->name('programs.enrollments.destroy');
+
+        // Census / report builder
+        Route::get('/reports/census', [ReportBuilderController::class, 'index'])->name('reports.census.index');
+        Route::get('/reports/census/builder', [ReportBuilderController::class, 'builder'])->name('reports.census.builder');
+        Route::post('/reports/census', [ReportBuilderController::class, 'store'])->name('reports.census.store');
+        // Print analytics PDFs with mPDF (open in a new tab)
+        Route::get('/reports/census/builder/print', [ReportBuilderController::class, 'printBuilder'])->name('reports.census.print-builder');
+        Route::get('/reports/census/{report_definition}/print', [ReportBuilderController::class, 'print'])->name('reports.census.print');
+        Route::get('/reports/census/{report_definition}', [ReportBuilderController::class, 'show'])->name('reports.census.show');
+        Route::put('/reports/census/{report_definition}', [ReportBuilderController::class, 'update'])->name('reports.census.update');
+        Route::delete('/reports/census/{report_definition}', [ReportBuilderController::class, 'destroy'])->name('reports.census.destroy');
     });
 
     // Member's own requests
@@ -218,5 +282,11 @@ Route::middleware(['auth'])->group(function () {
         Route::get('/my-complaints/create', [ComplaintController::class, 'create'])->name('my-complaints.create');
         Route::post('/my-complaints', [ComplaintController::class, 'store'])->name('my-complaints.store');
         Route::get('/my-complaints/{complaint}', [ComplaintController::class, 'myShow'])->name('my-complaints.show');
+    });
+
+    // Audit Logs (admin/moderator)
+    Route::middleware('can:view audit logs')->group(function () {
+        Route::get('/audit-logs', [AuditLogController::class, 'index'])->name('audit-logs.index');
+        Route::get('/audit-logs/{auditLog}', [AuditLogController::class, 'show'])->name('audit-logs.show');
     });
 });

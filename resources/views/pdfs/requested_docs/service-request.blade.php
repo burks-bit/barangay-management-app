@@ -21,7 +21,7 @@
 	</style>
 </head>
 <body>
-	@include('pdf.header', ['barangay' => $barangay])
+	@include('pdfs.requested_docs.header', ['barangay' => $barangay])
 
 	<div class="subtitle">{{ $serviceRequest->requestType?->name }}<br>{{ $serviceRequest->tracking_number }}</div>
 	<div class="row"><span class="label">Requester:</span>{{ $serviceRequest->requester?->memberProfile?->full_name ?: $serviceRequest->resident?->full_name ?: $serviceRequest->requester?->name }}</div>
@@ -30,6 +30,6 @@
 	<div class="content">{!! strip_tags($serviceRequest->document_content, '<p><br><strong><b><em><i><u><ol><ul><li><a><span>') !!}</div>
 	<div class="signatures"><div class="signature">{{ $serviceRequest->encoder?->name }}<br>Encoded by</div><div class="signature">{{ $serviceRequest->approverOfficial?->full_name }}<br>Approved and released by</div></div>
 
-	@include('pdf.footer', ['serviceRequest' => $serviceRequest])
+	@include('pdfs.requested_docs.footer', ['serviceRequest' => $serviceRequest])
 </body>
 </html>

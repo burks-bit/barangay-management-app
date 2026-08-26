@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'unisms' => [
+        'url' => env('UNISMS_API_URL', 'https://unismsapi.com/api/sms'),
+        'key' => env('UNISMS_API_KEY'),
+        // 'key' => 'sk_D8qc-U2sNxPyQXCqeFfCPArw8v-eW47t0bt7fHEBTQyTwheUMp5qKjb06OKEtj7UNtsmJ8lsoBlb6IRxiCWMQA-1874',
+        'sender_id' => env('UNISMS_SENDER_ID', 'UniSMS'),
+    ],
+
 ];
