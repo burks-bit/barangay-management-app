@@ -24,7 +24,7 @@ use Mpdf\Mpdf;
  * dimensions), grouped by a chosen breakdown, and save them as reusable
  * named reports.
  */
-class ReportBuilderService
+class ReportBuilderService extends Service
 {
     /**
      * Dataset configuration: available group-by dimensions, statuses,
@@ -90,12 +90,14 @@ class ReportBuilderService
 
     public function create(Request $request, int $userId): ReportDefinition
     {
-        $validated = $this->validateDefinition($request);
+        return $this->attempt(function () use ($request, $userId) {
+            $validated = $this->validateDefinition($request);
 
-        return ReportDefinition::create([
-            ...$validated,
-            'created_by' => $userId,
-        ]);
+            return ReportDefinition::create([
+                ...$validated,
+                'created_by' => $userId,
+            ]);
+        }, 'ReportBuilderService::create');
     }
 
     public function show(ReportDefinition $report_definition): array
@@ -112,14 +114,16 @@ class ReportBuilderService
 
     public function update(Request $request, ReportDefinition $report_definition): void
     {
-        $validated = $this->validateDefinition($request, $report_definition);
+        $this->attempt(function () use ($request, $report_definition) {
+            $validated = $this->validateDefinition($request, $report_definition);
 
-        $report_definition->update($validated);
+            $report_definition->update($validated);
+        }, 'ReportBuilderService::update');
     }
 
     public function delete(ReportDefinition $report_definition): void
     {
-        $report_definition->delete();
+        $this->attempt(fn () => $report_definition->delete(), 'ReportBuilderService::delete');
     }
 
     /**

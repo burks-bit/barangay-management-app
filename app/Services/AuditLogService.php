@@ -7,7 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Request;
 
-class AuditLogService
+class AuditLogService extends Service
 {
     public function distinctModules(): Collection
     {
@@ -24,6 +24,10 @@ class AuditLogService
         return User::select('id', 'name')->orderBy('name')->get();
     }
 
+    /**
+     * Best-effort audit log write. A failure to persist an audit record is
+     * logged but must never break the business operation that triggered it.
+     */
     public function log(
         string $action,
         string $module,
@@ -32,16 +36,26 @@ class AuditLogService
         ?array $oldValues = null,
         ?array $newValues = null
     ): void {
-        AuditLog::create([
-            'user_id' => auth()->id(),
-            'action' => $action,
-            'module' => $module,
-            'record_type' => $recordType,
-            'record_id' => $recordId,
-            'old_values' => $oldValues,
-            'new_values' => $newValues,
-            'ip_address' => Request::ip(),
-            'user_agent' => Request::userAgent(),
-        ]);
+        try {
+            AuditLog::create([
+                'user_id' => auth()->id(),
+                'action' => $action,
+                'module' => $module,
+                'record_type' => $recordType,
+                'record_id' => $recordId,
+                'old_values' => $oldValues,
+                'new_values' => $newValues,
+                'ip_address' => Request::ip(),
+                'user_agent' => Request::userAgent(),
+            ]);
+        } catch (\Throwable $exception) {
+            \Illuminate\Support\Facades\Log::error('Failed to write audit log.', [
+                'action' => $action,
+                'module' => $module,
+                'record_type' => $recordType,
+                'record_id' => $recordId,
+                'exception' => $exception,
+            ]);
+        }
     }
 }

@@ -23,22 +23,28 @@ class RequestTypeController extends Controller
 
     public function store(Request $request)
     {
-        $this->requestTypes->create($request);
-
-        return back()->with('success', 'Document type created successfully.');
+        return $this->handle(
+            fn () => $this->requestTypes->create($request),
+            fn () => back()->with('success', 'Document type created successfully.'),
+            'RequestTypeController::store'
+        );
     }
 
     public function update(Request $request, RequestType $request_type)
     {
-        $this->requestTypes->update($request, $request_type);
-
-        return back()->with('success', 'Document type updated successfully.');
+        return $this->handle(
+            fn () => $this->requestTypes->update($request, $request_type),
+            fn () => back()->with('success', 'Document type updated successfully.'),
+            'RequestTypeController::update'
+        );
     }
 
     public function destroy(RequestType $request_type)
     {
-        $this->requestTypes->delete($request_type);
-
-        return back()->with('success', 'Document type deleted successfully.');
+        return $this->handle(
+            fn () => $this->requestTypes->delete($request_type),
+            fn () => back()->with('success', 'Document type deleted successfully.'),
+            'RequestTypeController::destroy'
+        );
     }
 }

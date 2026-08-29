@@ -11,7 +11,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Mpdf\Mpdf;
 
-class ServiceRequestService
+class ServiceRequestService extends Service
 {
     public function __construct(private AuditLogService $auditLog)
     {
@@ -70,7 +70,7 @@ class ServiceRequestService
             'description' => 'nullable|string|max:2000',
         ]);
 
-        return DB::transaction(function () use ($validated, $requester) {
+        return $this->transaction(function () use ($validated, $requester) {
             $serviceRequest = ServiceRequest::create([
                 'tracking_number' => $this->generateTrackingNumber(),
                 'requester_id' => $requester->id,
@@ -93,7 +93,7 @@ class ServiceRequestService
             $this->auditLog->log('created', 'requests', 'ServiceRequest', $serviceRequest->id, null, $serviceRequest->toArray());
 
             return $serviceRequest;
-        });
+        }, 'ServiceRequestService::create');
     }
 
     /**
@@ -123,7 +123,7 @@ class ServiceRequestService
 
         $profile = MemberProfile::findOrFail($validated['member_profile_id']);
 
-        return DB::transaction(function () use ($validated, $profile) {
+        return $this->transaction(function () use ($validated, $profile) {
             $serviceRequest = ServiceRequest::create([
                 'tracking_number' => $this->generateTrackingNumber(),
                 // Link the resident's account when they have one so they can
@@ -156,7 +156,7 @@ class ServiceRequestService
             );
 
             return $serviceRequest;
-        });
+        }, 'ServiceRequestService::createWalkIn');
     }
 
     private function generateTrackingNumber(): string
@@ -194,12 +194,14 @@ class ServiceRequestService
             'encoded_by' => 'required|exists:users,id',
         ]);
 
-        $serviceRequest->update([
-            'document_content' => $validated['document_content'],
-            'encoded_by' => $validated['encoded_by'],
-            'encoded_at' => now(),
-            'status' => 'ready_for_release',
-        ]);
+        $this->attempt(function () use ($validated, $serviceRequest) {
+            $serviceRequest->update([
+                'document_content' => $validated['document_content'],
+                'encoded_by' => $validated['encoded_by'],
+                'encoded_at' => now(),
+                'status' => 'ready_for_release',
+            ]);
+        }, 'ServiceRequestService::encode');
     }
 
     public function release(Request $request, ServiceRequest $serviceRequest): void
@@ -216,13 +218,15 @@ class ServiceRequestService
             ->whereHas('barangayProfile', fn ($query) => $query->where('is_active', true))
             ->exists(), 422, 'Select an active barangay captain.');
 
-        $serviceRequest->update([
-            'approved_by_official_id' => $validated['approved_by'],
-            'status' => 'released',
-            'released_at' => now(),
-        ]);
+        $this->transaction(function () use ($validated, $request, $serviceRequest) {
+            $serviceRequest->update([
+                'approved_by_official_id' => $validated['approved_by'],
+                'status' => 'released',
+                'released_at' => now(),
+            ]);
 
-        $serviceRequest->requester?->notify(new \App\Notifications\RequestStatusChanged($serviceRequest));
+            $serviceRequest->requester?->notify(new \App\Notifications\RequestStatusChanged($serviceRequest));
+        }, 'ServiceRequestService::release');
     }
 
     public function downloadPdf(Request $request, ServiceRequest $serviceRequest)
@@ -251,18 +255,22 @@ class ServiceRequestService
             'description' => 'nullable|string|max:2000',
         ]);
 
-        $oldValues = $serviceRequest->only(array_keys($validated));
-        $serviceRequest->update($validated);
+        $this->transaction(function () use ($validated, $serviceRequest) {
+            $oldValues = $serviceRequest->only(array_keys($validated));
+            $serviceRequest->update($validated);
 
-        $this->auditLog->log('updated', 'requests', 'ServiceRequest', $serviceRequest->id, $oldValues, $serviceRequest->fresh()->toArray());
+            $this->auditLog->log('updated', 'requests', 'ServiceRequest', $serviceRequest->id, $oldValues, $serviceRequest->fresh()->toArray());
+        }, 'ServiceRequestService::update');
     }
 
     public function delete(ServiceRequest $serviceRequest): void
     {
-        $oldValues = $serviceRequest->toArray();
-        $serviceRequest->delete();
+        $this->attempt(function () use ($serviceRequest) {
+            $oldValues = $serviceRequest->toArray();
+            $serviceRequest->delete();
 
-        $this->auditLog->log('deleted', 'requests', 'ServiceRequest', $serviceRequest->id, $oldValues, null);
+            $this->auditLog->log('deleted', 'requests', 'ServiceRequest', $serviceRequest->id, $oldValues, null);
+        }, 'ServiceRequestService::delete');
     }
 
     /**
@@ -275,26 +283,29 @@ class ServiceRequestService
         ]);
 
         $oldStatus = $serviceRequest->status;
-        $serviceRequest->update([
-            'assigned_to' => $validated['assigned_to'],
-            'status' => 'for_verification',
-        ]);
 
-        $serviceRequest->statusHistories()->create([
-            'user_id' => auth()->id(),
-            'from_status' => $oldStatus,
-            'to_status' => 'for_verification',
-            'remarks' => 'Assigned to staff for verification',
-        ]);
+        $this->transaction(function () use ($validated, $oldStatus, $serviceRequest) {
+            $serviceRequest->update([
+                'assigned_to' => $validated['assigned_to'],
+                'status' => 'for_verification',
+            ]);
 
-        $this->auditLog->log(
-            'assigned request',
-            'requests',
-            'ServiceRequest',
-            $serviceRequest->id,
-            ['assigned_to' => $serviceRequest->getOriginal('assigned_to'), 'status' => $oldStatus],
-            ['assigned_to' => $validated['assigned_to'], 'status' => 'for_verification']
-        );
+            $serviceRequest->statusHistories()->create([
+                'user_id' => auth()->id(),
+                'from_status' => $oldStatus,
+                'to_status' => 'for_verification',
+                'remarks' => 'Assigned to staff for verification',
+            ]);
+
+            $this->auditLog->log(
+                'assigned request',
+                'requests',
+                'ServiceRequest',
+                $serviceRequest->id,
+                ['assigned_to' => $serviceRequest->getOriginal('assigned_to'), 'status' => $oldStatus],
+                ['assigned_to' => $validated['assigned_to'], 'status' => 'for_verification']
+            );
+        }, 'ServiceRequestService::assign');
     }
 
     /**
@@ -319,25 +330,27 @@ class ServiceRequestService
             $updateData['released_at'] = now();
         }
 
-        $serviceRequest->update($updateData);
+        $this->transaction(function () use ($updateData, $newStatus, $oldStatus, $validated, $serviceRequest) {
+            $serviceRequest->update($updateData);
 
-        $serviceRequest->statusHistories()->create([
-            'user_id' => auth()->id(),
-            'from_status' => $oldStatus,
-            'to_status' => $newStatus,
-            'remarks' => $validated['remarks'] ?? "Status changed to {$newStatus}",
-        ]);
+            $serviceRequest->statusHistories()->create([
+                'user_id' => auth()->id(),
+                'from_status' => $oldStatus,
+                'to_status' => $newStatus,
+                'remarks' => $validated['remarks'] ?? "Status changed to {$newStatus}",
+            ]);
 
-        // Notify the requester
-        $serviceRequest->requester?->notify(new \App\Notifications\RequestStatusChanged($serviceRequest));
+            // Notify the requester (null-safe for walk-in requests without an account)
+            $serviceRequest->requester?->notify(new \App\Notifications\RequestStatusChanged($serviceRequest));
 
-        $this->auditLog->log(
-            'updated request status',
-            'requests',
-            'ServiceRequest',
-            $serviceRequest->id,
-            ['status' => $oldStatus],
-            ['status' => $newStatus]
-        );
+            $this->auditLog->log(
+                'updated request status',
+                'requests',
+                'ServiceRequest',
+                $serviceRequest->id,
+                ['status' => $oldStatus],
+                ['status' => $newStatus]
+            );
+        }, 'ServiceRequestService::process');
     }
 }

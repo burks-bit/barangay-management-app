@@ -9,7 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
-class EvacuationCenterService
+class EvacuationCenterService extends Service
 {
     public function list(Request $request): Collection
     {
@@ -56,29 +56,35 @@ class EvacuationCenterService
         $validated = $this->validate($request);
         $validated['current_occupancy'] = 0;
 
-        EvacuationCenter::create($validated);
+        $this->attempt(function () use ($validated) {
+            EvacuationCenter::create($validated);
+        }, 'Failed to create evacuation center.');
     }
 
     public function update(Request $request, EvacuationCenter $evacuationCenter): void
     {
         $validated = $this->validate($request);
 
-        $evacuationCenter->update($validated);
-        $evacuationCenter->recalculateOccupancy();
+        $this->transaction(function () use ($validated, $evacuationCenter) {
+            $evacuationCenter->update($validated);
+            $evacuationCenter->recalculateOccupancy();
+        }, 'Failed to update evacuation center.');
     }
 
     public function delete(EvacuationCenter $evacuationCenter): void
     {
-        // Mark evacuated households as returned before deleting
-        $evacuationCenter->households()
-            ->where('evacuation_status', 'evacuated')
-            ->update([
-                'evacuation_status' => 'returned',
-                'evacuation_center_id' => null,
-                'evacuated_at' => null,
-            ]);
+        $this->transaction(function () use ($evacuationCenter) {
+            // Mark evacuated households as returned before deleting
+            $evacuationCenter->households()
+                ->where('evacuation_status', 'evacuated')
+                ->update([
+                    'evacuation_status' => 'returned',
+                    'evacuation_center_id' => null,
+                    'evacuated_at' => null,
+                ]);
 
-        $evacuationCenter->delete();
+            $evacuationCenter->delete();
+        }, 'Failed to delete evacuation center.');
     }
 
     private function validate(Request $request): array

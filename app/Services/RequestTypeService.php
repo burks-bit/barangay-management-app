@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
-class RequestTypeService
+class RequestTypeService extends Service
 {
     public function list(): Collection
     {
@@ -16,23 +16,23 @@ class RequestTypeService
 
     public function create(Request $request): void
     {
-        $validated = $this->validate($request);
-
-        RequestType::create($validated);
+        $this->attempt(function () use ($request) {
+            RequestType::create($this->validate($request));
+        }, 'RequestTypeService::create');
     }
 
     public function update(Request $request, RequestType $requestType): void
     {
-        $validated = $this->validate($request, $requestType);
-
-        $requestType->update($validated);
+        $this->attempt(function () use ($request, $requestType) {
+            $requestType->update($this->validate($request, $requestType));
+        }, 'RequestTypeService::update');
     }
 
     public function delete(RequestType $requestType): void
     {
         abort_if($requestType->serviceRequests()->exists(), 422, 'This document type is already used by requests.');
 
-        $requestType->delete();
+        $this->attempt(fn () => $requestType->delete(), 'RequestTypeService::delete');
     }
 
     private function validate(Request $request, ?RequestType $requestType = null): array

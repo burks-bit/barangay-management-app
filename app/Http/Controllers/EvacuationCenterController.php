@@ -30,9 +30,11 @@ class EvacuationCenterController extends Controller
 
     public function store(Request $request)
     {
-        $this->evacuationCenters->create($request);
-
-        return redirect()->route('evacuation-centers.index')->with('success', 'Evacuation center created successfully.');
+        return $this->handle(
+            fn () => $this->evacuationCenters->create($request),
+            fn () => redirect()->route('evacuation-centers.index')->with('success', 'Evacuation center created successfully.'),
+            'EvacuationCenterController::store'
+        );
     }
 
     public function edit(EvacuationCenter $evacuationCenter): Response
@@ -44,15 +46,19 @@ class EvacuationCenterController extends Controller
 
     public function update(Request $request, EvacuationCenter $evacuationCenter)
     {
-        $this->evacuationCenters->update($request, $evacuationCenter);
-
-        return redirect()->route('evacuation-centers.index')->with('success', 'Evacuation center updated successfully.');
+        return $this->handle(
+            fn () => $this->evacuationCenters->update($request, $evacuationCenter),
+            fn () => redirect()->route('evacuation-centers.index')->with('success', 'Evacuation center updated successfully.'),
+            'EvacuationCenterController::update'
+        );
     }
 
     public function destroy(EvacuationCenter $evacuationCenter)
     {
-        $this->evacuationCenters->delete($evacuationCenter);
-
-        return redirect()->route('evacuation-centers.index')->with('success', 'Evacuation center deleted successfully.');
+        return $this->handle(
+            fn () => $this->evacuationCenters->delete($evacuationCenter),
+            fn () => redirect()->route('evacuation-centers.index')->with('success', 'Evacuation center deleted successfully.'),
+            'EvacuationCenterController::destroy'
+        );
     }
 }

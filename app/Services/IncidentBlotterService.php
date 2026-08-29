@@ -9,9 +9,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
-class IncidentBlotterService
+class IncidentBlotterService extends Service
 {
     public function __construct(
         private AuditLogService $auditLog,
@@ -75,7 +74,7 @@ class IncidentBlotterService
             'remarks' => 'nullable|string|max:2000',
         ]);
 
-        $blotter = DB::transaction(function () use ($validated, $recorder) {
+        $blotter = $this->transaction(function () use ($validated, $recorder) {
             $year = now()->year;
             $lastNumber = IncidentBlotter::whereYear('created_at', $year)->count() + 1;
             $blotterCode = sprintf('BLT-%d-%06d', $year, $lastNumber);
@@ -94,7 +93,7 @@ class IncidentBlotterService
             $this->auditLog->log('created', 'incident_blotters', 'IncidentBlotter', $blotter->id, null, $blotter->toArray());
 
             return $blotter;
-        });
+        }, 'Failed to record blotter entry.');
 
         $this->uniSms->notifyOfficials($blotter);
 
@@ -131,16 +130,18 @@ class IncidentBlotterService
             $updateData['remarks'] = $validated['remarks'];
         }
 
-        $blotter->update($updateData);
+        $this->transaction(function () use ($blotter, $updateData, $oldStatus, $newStatus) {
+            $blotter->update($updateData);
 
-        $this->auditLog->log(
-            'updated blotter status',
-            'incident_blotters',
-            'IncidentBlotter',
-            $blotter->id,
-            ['status' => $oldStatus],
-            ['status' => $newStatus]
-        );
+            $this->auditLog->log(
+                'updated blotter status',
+                'incident_blotters',
+                'IncidentBlotter',
+                $blotter->id,
+                ['status' => $oldStatus],
+                ['status' => $newStatus]
+            );
+        }, 'Failed to update blotter status.');
     }
 
     /**
@@ -148,9 +149,11 @@ class IncidentBlotterService
      */
     public function delete(IncidentBlotter $blotter): void
     {
-        $oldValues = $blotter->toArray();
-        $blotter->delete();
+        $this->transaction(function () use ($blotter) {
+            $oldValues = $blotter->toArray();
+            $blotter->delete();
 
-        $this->auditLog->log('deleted', 'incident_blotters', 'IncidentBlotter', $blotter->id, $oldValues, null);
+            $this->auditLog->log('deleted', 'incident_blotters', 'IncidentBlotter', $blotter->id, $oldValues, null);
+        }, 'Failed to delete blotter entry.');
     }
 }

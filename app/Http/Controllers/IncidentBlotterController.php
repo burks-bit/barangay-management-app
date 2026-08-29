@@ -43,10 +43,11 @@ class IncidentBlotterController extends Controller
      */
     public function store(Request $request)
     {
-        $this->blotters->create($request, $request->user());
-
-        return redirect()->route('incidents.blotter.index')
-            ->with('success', 'Blotter entry recorded successfully.');
+        return $this->handle(
+            fn () => $this->blotters->create($request, $request->user()),
+            fn () => redirect()->route('incidents.blotter.index')->with('success', 'Blotter entry recorded successfully.'),
+            'IncidentBlotterController::store'
+        );
     }
 
     /**
@@ -64,9 +65,11 @@ class IncidentBlotterController extends Controller
      */
     public function updateStatus(Request $request, IncidentBlotter $blotter)
     {
-        $this->blotters->updateStatus($request, $blotter);
-
-        return back()->with('success', 'Blotter status updated successfully.');
+        return $this->handle(
+            fn () => $this->blotters->updateStatus($request, $blotter),
+            fn () => back()->with('success', 'Blotter status updated successfully.'),
+            'IncidentBlotterController::updateStatus'
+        );
     }
 
     /**
@@ -74,9 +77,10 @@ class IncidentBlotterController extends Controller
      */
     public function destroy(IncidentBlotter $blotter)
     {
-        $this->blotters->delete($blotter);
-
-        return redirect()->route('incidents.blotter.index')
-            ->with('success', 'Blotter entry deleted successfully.');
+        return $this->handle(
+            fn () => $this->blotters->delete($blotter),
+            fn () => redirect()->route('incidents.blotter.index')->with('success', 'Blotter entry deleted successfully.'),
+            'IncidentBlotterController::destroy'
+        );
     }
 }

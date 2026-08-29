@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
-class HouseholdService
+class HouseholdService extends Service
 {
     public function list(Request $request): LengthAwarePaginator
     {
@@ -70,11 +70,13 @@ class HouseholdService
             $validated['evacuated_at'] = now();
         }
 
-        $household = Household::create($validated);
+        $this->transaction(function () use ($validated, $evacuationStatus) {
+            $household = Household::create($validated);
 
-        if (!empty($validated['evacuation_center_id']) && $evacuationStatus === 'evacuated') {
-            EvacuationCenter::find($validated['evacuation_center_id'])->recalculateOccupancy();
-        }
+            if (!empty($validated['evacuation_center_id']) && $evacuationStatus === 'evacuated') {
+                EvacuationCenter::find($validated['evacuation_center_id'])?->recalculateOccupancy();
+            }
+        }, 'Failed to create household.');
     }
 
     public function show(Household $household): Household
@@ -101,26 +103,30 @@ class HouseholdService
             }
         }
 
-        $household->update($validated);
+        $this->transaction(function () use ($validated, $household, $oldCenterId) {
+            $household->update($validated);
 
-        // Recalculate occupancy for old and new centers
-        $centersToRecalc = collect([$oldCenterId, $validated['evacuation_center_id'] ?? null])
-            ->filter()
-            ->unique();
+            // Recalculate occupancy for old and new centers
+            $centersToRecalc = collect([$oldCenterId, $validated['evacuation_center_id'] ?? null])
+                ->filter()
+                ->unique();
 
-        foreach ($centersToRecalc as $centerId) {
-            EvacuationCenter::find($centerId)?->recalculateOccupancy();
-        }
+            foreach ($centersToRecalc as $centerId) {
+                EvacuationCenter::find($centerId)?->recalculateOccupancy();
+            }
+        }, 'Failed to update household.');
     }
 
     public function delete(Household $household): void
     {
-        $centerId = $household->evacuation_center_id;
-        $household->delete();
+        $this->transaction(function () use ($household) {
+            $centerId = $household->evacuation_center_id;
+            $household->delete();
 
-        if ($centerId) {
-            EvacuationCenter::find($centerId)?->recalculateOccupancy();
-        }
+            if ($centerId) {
+                EvacuationCenter::find($centerId)?->recalculateOccupancy();
+            }
+        }, 'Failed to delete household.');
     }
 
     public function evacuate(Request $request, Household $household): void
@@ -131,31 +137,35 @@ class HouseholdService
 
         $oldCenterId = $household->evacuation_center_id;
 
-        $household->update([
-            'evacuation_center_id' => $validated['evacuation_center_id'],
-            'evacuation_status' => 'evacuated',
-            'evacuated_at' => now(),
-        ]);
+        $this->transaction(function () use ($validated, $household, $oldCenterId) {
+            $household->update([
+                'evacuation_center_id' => $validated['evacuation_center_id'],
+                'evacuation_status' => 'evacuated',
+                'evacuated_at' => now(),
+            ]);
 
-        $centers = collect([$oldCenterId, $validated['evacuation_center_id']])->unique();
-        foreach ($centers as $centerId) {
-            EvacuationCenter::find($centerId)?->recalculateOccupancy();
-        }
+            $centers = collect([$oldCenterId, $validated['evacuation_center_id']])->unique();
+            foreach ($centers as $centerId) {
+                EvacuationCenter::find($centerId)?->recalculateOccupancy();
+            }
+        }, 'Failed to evacuate household.');
     }
 
     public function returnHome(Household $household): void
     {
-        $centerId = $household->evacuation_center_id;
+        $this->transaction(function () use ($household) {
+            $centerId = $household->evacuation_center_id;
 
-        $household->update([
-            'evacuation_center_id' => null,
-            'evacuation_status' => 'returned',
-            'evacuated_at' => null,
-        ]);
+            $household->update([
+                'evacuation_center_id' => null,
+                'evacuation_status' => 'returned',
+                'evacuated_at' => null,
+            ]);
 
-        if ($centerId) {
-            EvacuationCenter::find($centerId)?->recalculateOccupancy();
-        }
+            if ($centerId) {
+                EvacuationCenter::find($centerId)?->recalculateOccupancy();
+            }
+        }, 'Failed to mark household as returned home.');
     }
 
     private function validate(Request $request, ?Household $household = null): array

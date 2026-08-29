@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
-class AnnouncementService
+class AnnouncementService extends Service
 {
     public const TYPES = [
         'calamity_warning',
@@ -43,21 +43,25 @@ class AnnouncementService
         $validated = $this->validate($request);
         $publish = $request->boolean('publish');
 
-        $announcement = Announcement::create([
-            ...$validated,
-            'created_by' => $creator->id,
-            'status' => $publish ? 'published' : 'draft',
-            'published_at' => $publish ? now() : null,
-        ]);
+        $announcement = $this->transaction(function () use ($validated, $creator, $publish) {
+            $announcement = Announcement::create([
+                ...$validated,
+                'created_by' => $creator->id,
+                'status' => $publish ? 'published' : 'draft',
+                'published_at' => $publish ? now() : null,
+            ]);
 
-        $this->auditLog->log(
-            $publish ? 'published announcement' : 'created announcement draft',
-            'announcements',
-            'Announcement',
-            $announcement->id,
-            null,
-            $announcement->toArray()
-        );
+            $this->auditLog->log(
+                $publish ? 'published announcement' : 'created announcement draft',
+                'announcements',
+                'Announcement',
+                $announcement->id,
+                null,
+                $announcement->toArray()
+            );
+
+            return $announcement;
+        }, 'Failed to create announcement.');
 
         return $announcement;
     }
@@ -67,16 +71,18 @@ class AnnouncementService
         $validated = $this->validate($request);
         $oldValues = $announcement->only(array_keys($validated));
 
-        $announcement->update($validated);
+        $this->transaction(function () use ($validated, $announcement, $oldValues) {
+            $announcement->update($validated);
 
-        $this->auditLog->log(
-            'updated announcement',
-            'announcements',
-            'Announcement',
-            $announcement->id,
-            $oldValues,
-            $announcement->fresh()->toArray()
-        );
+            $this->auditLog->log(
+                'updated announcement',
+                'announcements',
+                'Announcement',
+                $announcement->id,
+                $oldValues,
+                $announcement->fresh()->toArray()
+            );
+        }, 'Failed to update announcement.');
     }
 
     /**
@@ -86,20 +92,22 @@ class AnnouncementService
     {
         $oldValues = $announcement->only(['status', 'published_at', 'archived_at']);
 
-        $announcement->update([
-            'status' => 'published',
-            'published_at' => $announcement->published_at ?? now(),
-            'archived_at' => null,
-        ]);
+        $this->transaction(function () use ($announcement, $oldValues) {
+            $announcement->update([
+                'status' => 'published',
+                'published_at' => $announcement->published_at ?? now(),
+                'archived_at' => null,
+            ]);
 
-        $this->auditLog->log(
-            'published announcement',
-            'announcements',
-            'Announcement',
-            $announcement->id,
-            $oldValues,
-            $announcement->fresh()->toArray()
-        );
+            $this->auditLog->log(
+                'published announcement',
+                'announcements',
+                'Announcement',
+                $announcement->id,
+                $oldValues,
+                $announcement->fresh()->toArray()
+            );
+        }, 'Failed to publish announcement.');
     }
 
     /**
@@ -109,34 +117,38 @@ class AnnouncementService
     {
         $oldValues = $announcement->only(['status', 'archived_at']);
 
-        $announcement->update([
-            'status' => 'archived',
-            'archived_at' => now(),
-        ]);
+        $this->transaction(function () use ($announcement, $oldValues) {
+            $announcement->update([
+                'status' => 'archived',
+                'archived_at' => now(),
+            ]);
 
-        $this->auditLog->log(
-            'archived announcement',
-            'announcements',
-            'Announcement',
-            $announcement->id,
-            $oldValues,
-            $announcement->fresh()->toArray()
-        );
+            $this->auditLog->log(
+                'archived announcement',
+                'announcements',
+                'Announcement',
+                $announcement->id,
+                $oldValues,
+                $announcement->fresh()->toArray()
+            );
+        }, 'Failed to archive announcement.');
     }
 
     public function delete(Announcement $announcement): void
     {
-        $oldValues = $announcement->toArray();
-        $announcement->delete();
+        $this->transaction(function () use ($announcement) {
+            $oldValues = $announcement->toArray();
+            $announcement->delete();
 
-        $this->auditLog->log(
-            'deleted announcement',
-            'announcements',
-            'Announcement',
-            $announcement->id,
-            $oldValues,
-            null
-        );
+            $this->auditLog->log(
+                'deleted announcement',
+                'announcements',
+                'Announcement',
+                $announcement->id,
+                $oldValues,
+                null
+            );
+        }, 'Failed to delete announcement.');
     }
 
     private function validate(Request $request): array

@@ -40,10 +40,11 @@ class ReportBuilderController extends Controller
 
     public function store(Request $request)
     {
-        $report = $this->reports->create($request, $request->user()->id);
-
-        return redirect()->route('reports.census.show', $report)
-            ->with('success', 'Report saved successfully.');
+        return $this->handle(
+            fn () => $this->reports->create($request, $request->user()->id),
+            fn ($report) => redirect()->route('reports.census.show', $report)->with('success', 'Report saved successfully.'),
+            'ReportBuilderController::store'
+        );
     }
 
     public function show(ReportDefinition $report_definition): Response
@@ -53,18 +54,20 @@ class ReportBuilderController extends Controller
 
     public function update(Request $request, ReportDefinition $report_definition)
     {
-        $this->reports->update($request, $report_definition);
-
-        return redirect()->route('reports.census.show', $report_definition)
-            ->with('success', 'Report updated successfully.');
+        return $this->handle(
+            fn () => $this->reports->update($request, $report_definition),
+            fn () => redirect()->route('reports.census.show', $report_definition)->with('success', 'Report updated successfully.'),
+            'ReportBuilderController::update'
+        );
     }
 
     public function destroy(ReportDefinition $report_definition)
     {
-        $this->reports->delete($report_definition);
-
-        return redirect()->route('reports.census.index')
-            ->with('success', 'Report deleted successfully.');
+        return $this->handle(
+            fn () => $this->reports->delete($report_definition),
+            fn () => redirect()->route('reports.census.index')->with('success', 'Report deleted successfully.'),
+            'ReportBuilderController::destroy'
+        );
     }
 
     /**

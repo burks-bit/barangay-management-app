@@ -7,9 +7,8 @@ use App\Models\AssistanceType;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 
-class AssistanceService
+class AssistanceService extends Service
 {
     /**
      * Status transitions allowed from the staff assistance page, mapped to
@@ -61,7 +60,7 @@ class AssistanceService
             'amount' => 'nullable|numeric|min:0|max:99999999.99',
         ]);
 
-        DB::transaction(function () use ($validated, $applicant) {
+        $this->transaction(function () use ($validated, $applicant) {
             $number = AssistanceRequest::whereYear('created_at', now()->year)->count() + 1;
             $code = sprintf('AST-%d-%06d', now()->year, $number);
 
@@ -76,7 +75,7 @@ class AssistanceService
                 'applicant_id' => $applicant->id,
                 'status' => 'submitted',
             ]);
-        });
+        }, 'Failed to create assistance request.');
     }
 
     /**
@@ -110,16 +109,18 @@ class AssistanceService
             $updateData['released_at'] = now();
         }
 
-        $assistanceRequest->update($updateData);
+        $this->transaction(function () use ($assistanceRequest, $updateData, $oldStatus, $newStatus) {
+            $assistanceRequest->update($updateData);
 
-        $this->auditLog->log(
-            'updated assistance status',
-            'assistance',
-            'AssistanceRequest',
-            $assistanceRequest->id,
-            ['status' => $oldStatus],
-            ['status' => $newStatus]
-        );
+            $this->auditLog->log(
+                'updated assistance status',
+                'assistance',
+                'AssistanceRequest',
+                $assistanceRequest->id,
+                ['status' => $oldStatus],
+                ['status' => $newStatus]
+            );
+        }, 'Failed to update assistance status.');
 
         // Notify the applicant (only if they have an account).
         $assistanceRequest->applicant?->notify(new \App\Notifications\AssistanceStatusChanged($assistanceRequest));

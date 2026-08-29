@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use Illuminate\Http\Request;
 
-class UserService
+class UserService extends Service
 {
     public function list(): array
     {
@@ -23,6 +23,8 @@ class UserService
 
         abort_if($user->is(auth()->user()) && $validated['role'] !== 'admin', 422, 'You cannot remove your own administrator role.');
 
-        $user->syncRoles([$validated['role']]);
+        $this->attempt(function () use ($validated, $user) {
+            $user->syncRoles([$validated['role']]);
+        }, 'UserService::updateRole');
     }
 }

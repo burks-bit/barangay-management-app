@@ -21,8 +21,10 @@ class UserController extends Controller
 
     public function updateRole(Request $request, User $user)
     {
-        $this->users->updateRole($request, $user);
-
-        return back()->with('success', 'User role updated successfully.');
+        return $this->handle(
+            fn () => $this->users->updateRole($request, $user),
+            fn () => back()->with('success', 'User role updated successfully.'),
+            'UserController::updateRole'
+        );
     }
 }

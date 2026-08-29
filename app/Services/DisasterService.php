@@ -12,7 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
-class DisasterService
+class DisasterService extends Service
 {
     public function calamities(Request $request): LengthAwarePaginator
     {
@@ -78,16 +78,18 @@ class DisasterService
             return ['info' => 'Your household is already assigned to this evacuation center.'];
         }
 
-        $household->update([
-            'evacuation_center_id' => $selectedCenter->id,
-            'evacuation_status' => 'evacuated',
-            'evacuated_at' => now(),
-        ]);
+        $this->transaction(function () use ($household, $selectedCenter, $oldCenterId) {
+            $household->update([
+                'evacuation_center_id' => $selectedCenter->id,
+                'evacuation_status' => 'evacuated',
+                'evacuated_at' => now(),
+            ]);
 
-        $centers = collect([$oldCenterId, $selectedCenter->id])->filter()->unique();
-        foreach ($centers as $centerId) {
-            EvacuationCenter::find($centerId)?->recalculateOccupancy();
-        }
+            $centers = collect([$oldCenterId, $selectedCenter->id])->filter()->unique();
+            foreach ($centers as $centerId) {
+                EvacuationCenter::find($centerId)?->recalculateOccupancy();
+            }
+        }, 'Failed to assign household to evacuation center.');
 
         return ['success' => 'Your household has been evacuated successfully.'];
     }
@@ -102,15 +104,17 @@ class DisasterService
 
         $centerId = $household->evacuation_center_id;
 
-        $household->update([
-            'evacuation_center_id' => null,
-            'evacuation_status' => 'returned',
-            'evacuated_at' => null,
-        ]);
+        $this->transaction(function () use ($household, $centerId) {
+            $household->update([
+                'evacuation_center_id' => null,
+                'evacuation_status' => 'returned',
+                'evacuated_at' => null,
+            ]);
 
-        if ($centerId) {
-            EvacuationCenter::find($centerId)?->recalculateOccupancy();
-        }
+            if ($centerId) {
+                EvacuationCenter::find($centerId)?->recalculateOccupancy();
+            }
+        }, 'Failed to mark household as returned home.');
 
         return ['success' => 'Your household has been marked as returned home.'];
     }

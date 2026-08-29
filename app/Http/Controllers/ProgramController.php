@@ -30,23 +30,29 @@ class ProgramController extends Controller
 
     public function store(Request $request)
     {
-        $this->programs->create($request, $request->user());
-
-        return back()->with('success', 'Program created successfully.');
+        return $this->handle(
+            fn () => $this->programs->create($request, $request->user()),
+            fn () => back()->with('success', 'Program created successfully.'),
+            'ProgramController::store'
+        );
     }
 
     public function update(Request $request, Program $program)
     {
-        $this->programs->update($request, $program);
-
-        return back()->with('success', 'Program updated successfully.');
+        return $this->handle(
+            fn () => $this->programs->update($request, $program),
+            fn () => back()->with('success', 'Program updated successfully.'),
+            'ProgramController::update'
+        );
     }
 
     public function destroy(Program $program)
     {
-        $this->programs->delete($program);
-
-        return redirect()->route('programs.index')->with('success', 'Program deleted successfully.');
+        return $this->handle(
+            fn () => $this->programs->delete($program),
+            fn () => redirect()->route('programs.index')->with('success', 'Program deleted successfully.'),
+            'ProgramController::destroy'
+        );
     }
 
     /**
@@ -54,9 +60,11 @@ class ProgramController extends Controller
      */
     public function enroll(Request $request, Program $program)
     {
-        $this->programs->enroll($request, $program, $request->user());
-
-        return back()->with('success', 'Resident enrolled successfully.');
+        return $this->handle(
+            fn () => $this->programs->enroll($request, $program, $request->user()),
+            fn () => back()->with('success', 'Resident enrolled successfully.'),
+            'ProgramController::enroll'
+        );
     }
 
     /**
@@ -64,15 +72,19 @@ class ProgramController extends Controller
      */
     public function updateEnrollment(Request $request, Program $program, ProgramEnrollment $enrollment)
     {
-        $this->programs->updateEnrollment($request, $program, $enrollment);
-
-        return back()->with('success', 'Enrollment updated successfully.');
+        return $this->handle(
+            fn () => $this->programs->updateEnrollment($request, $program, $enrollment),
+            fn () => back()->with('success', 'Enrollment updated successfully.'),
+            'ProgramController::updateEnrollment'
+        );
     }
 
     public function destroyEnrollment(Program $program, ProgramEnrollment $enrollment)
     {
-        $this->programs->deleteEnrollment($program, $enrollment);
-
-        return back()->with('success', 'Beneficiary removed from program.');
+        return $this->handle(
+            fn () => $this->programs->deleteEnrollment($program, $enrollment),
+            fn () => back()->with('success', 'Beneficiary removed from program.'),
+            'ProgramController::destroyEnrollment'
+        );
     }
 }

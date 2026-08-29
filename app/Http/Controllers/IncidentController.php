@@ -53,9 +53,11 @@ class IncidentController extends Controller
      */
     public function updateStatus(Request $request, Incident $incident)
     {
-        $this->incidents->updateStatus($request, $incident, $request->user());
-
-        return back()->with('success', 'Incident status updated successfully.');
+        return $this->handle(
+            fn () => $this->incidents->updateStatus($request, $incident, $request->user()),
+            fn () => back()->with('success', 'Incident status updated successfully.'),
+            'IncidentController::updateStatus'
+        );
     }
 
     /**
@@ -85,10 +87,11 @@ class IncidentController extends Controller
      */
     public function store(Request $request)
     {
-        $this->incidents->create($request, $request->user());
-
-        return redirect()->route('my-incidents')
-            ->with('success', 'Incident reported successfully. Barangay officials will review and respond to your report.');
+        return $this->handle(
+            fn () => $this->incidents->create($request, $request->user()),
+            fn () => redirect()->route('my-incidents')->with('success', 'Incident reported successfully. Barangay officials will review and respond to your report.'),
+            'IncidentController::store'
+        );
     }
 
     /**

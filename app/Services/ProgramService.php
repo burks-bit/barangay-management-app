@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 
-class ProgramService
+class ProgramService extends Service
 {
     public function __construct(private AuditLogService $auditLog)
     {
@@ -51,34 +51,40 @@ class ProgramService
 
     public function create(Request $request, User $creator): Program
     {
-        $validated = $this->validateProgram($request);
-        $validated['created_by'] = $creator->id;
+        return $this->transaction(function () use ($request, $creator) {
+            $validated = $this->validateProgram($request);
+            $validated['created_by'] = $creator->id;
 
-        $program = Program::create($validated);
+            $program = Program::create($validated);
 
-        $this->auditLog->log('created', 'programs', 'Program', $program->id, null, $program->toArray());
+            $this->auditLog->log('created', 'programs', 'Program', $program->id, null, $program->toArray());
 
-        return $program;
+            return $program;
+        }, 'ProgramService::create');
     }
 
     public function update(Request $request, Program $program): void
     {
-        $validated = $this->validateProgram($request, $program);
-        $oldValues = $program->only(array_keys($validated));
+        $this->transaction(function () use ($request, $program) {
+            $validated = $this->validateProgram($request, $program);
+            $oldValues = $program->only(array_keys($validated));
 
-        $program->update($validated);
+            $program->update($validated);
 
-        $this->auditLog->log('updated', 'programs', 'Program', $program->id, $oldValues, $program->fresh()->toArray());
+            $this->auditLog->log('updated', 'programs', 'Program', $program->id, $oldValues, $program->fresh()->toArray());
+        }, 'ProgramService::update');
     }
 
     public function delete(Program $program): void
     {
         abort_if($program->enrollments()->exists(), 422, 'This program has enrolled beneficiaries and cannot be deleted.');
 
-        $oldValues = $program->toArray();
-        $program->delete();
+        $this->attempt(function () use ($program) {
+            $oldValues = $program->toArray();
+            $program->delete();
 
-        $this->auditLog->log('deleted', 'programs', 'Program', $program->id, $oldValues, null);
+            $this->auditLog->log('deleted', 'programs', 'Program', $program->id, $oldValues, null);
+        }, 'ProgramService::delete');
     }
 
     /**
@@ -98,17 +104,19 @@ class ProgramService
             'This resident is already enrolled in the program.'
         );
 
-        $enrollment = ProgramEnrollment::create([
-            ...$validated,
-            'program_id' => $program->id,
-            'status' => 'enrolled',
-            'enrolled_at' => now(),
-            'enrolled_by' => $actor->id,
-        ]);
+        return $this->transaction(function () use ($validated, $program, $actor) {
+            $enrollment = ProgramEnrollment::create([
+                ...$validated,
+                'program_id' => $program->id,
+                'status' => 'enrolled',
+                'enrolled_at' => now(),
+                'enrolled_by' => $actor->id,
+            ]);
 
-        $this->auditLog->log('enrolled beneficiary', 'programs', 'ProgramEnrollment', $enrollment->id, null, $enrollment->toArray());
+            $this->auditLog->log('enrolled beneficiary', 'programs', 'ProgramEnrollment', $enrollment->id, null, $enrollment->toArray());
 
-        return $enrollment;
+            return $enrollment;
+        }, 'ProgramService::enroll');
     }
 
     /**
@@ -123,20 +131,24 @@ class ProgramService
             'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
-        $oldValues = $enrollment->only(array_keys($validated));
-        $enrollment->update($validated);
+        $this->transaction(function () use ($validated, $enrollment) {
+            $oldValues = $enrollment->only(array_keys($validated));
+            $enrollment->update($validated);
 
-        $this->auditLog->log('updated enrollment', 'programs', 'ProgramEnrollment', $enrollment->id, $oldValues, $enrollment->fresh()->toArray());
+            $this->auditLog->log('updated enrollment', 'programs', 'ProgramEnrollment', $enrollment->id, $oldValues, $enrollment->fresh()->toArray());
+        }, 'ProgramService::updateEnrollment');
     }
 
     public function deleteEnrollment(Program $program, ProgramEnrollment $enrollment): void
     {
         abort_unless($enrollment->program_id === $program->id, 404);
 
-        $oldValues = $enrollment->toArray();
-        $enrollment->delete();
+        $this->attempt(function () use ($enrollment) {
+            $oldValues = $enrollment->toArray();
+            $enrollment->delete();
 
-        $this->auditLog->log('removed enrollment', 'programs', 'ProgramEnrollment', $enrollment->id, $oldValues, null);
+            $this->auditLog->log('removed enrollment', 'programs', 'ProgramEnrollment', $enrollment->id, $oldValues, null);
+        }, 'ProgramService::deleteEnrollment');
     }
 
     private function validateProgram(Request $request, ?Program $program = null): array

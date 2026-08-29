@@ -59,10 +59,11 @@ class ServiceRequestController extends Controller
 
     public function store(Request $request)
     {
-        $this->requests->create($request, $request->user());
-
-        return redirect()->route('my-requests')
-            ->with('success', 'Request submitted successfully. You can track it using your tracking number.');
+        return $this->handle(
+            fn () => $this->requests->create($request, $request->user()),
+            fn () => redirect()->route('my-requests')->with('success', 'Request submitted successfully. You can track it using your tracking number.'),
+            'ServiceRequestController::store'
+        );
     }
 
     /**
@@ -82,10 +83,12 @@ class ServiceRequestController extends Controller
      */
     public function storeWalkIn(Request $request)
     {
-        $serviceRequest = $this->requests->createWalkIn($request);
-
-        return redirect()->route('requests.show', $serviceRequest)
-            ->with('success', "Walk-in request {$serviceRequest->tracking_number} created successfully.");
+        return $this->handle(
+            fn () => $this->requests->createWalkIn($request),
+            fn ($serviceRequest) => redirect()->route('requests.show', $serviceRequest)
+                ->with('success', "Walk-in request {$serviceRequest->tracking_number} created successfully."),
+            'ServiceRequestController::storeWalkIn'
+        );
     }
 
     public function show(ServiceRequest $service_request): Response
@@ -95,16 +98,20 @@ class ServiceRequestController extends Controller
 
     public function encode(Request $request, ServiceRequest $service_request)
     {
-        $this->requests->encode($request, $service_request);
-
-        return back()->with('success', 'Document encoded and ready for captain release.');
+        return $this->handle(
+            fn () => $this->requests->encode($request, $service_request),
+            fn () => back()->with('success', 'Document encoded and ready for captain release.'),
+            'ServiceRequestController::encode'
+        );
     }
 
     public function release(Request $request, ServiceRequest $service_request)
     {
-        $this->requests->release($request, $service_request);
-
-        return back()->with('success', 'Document released successfully.');
+        return $this->handle(
+            fn () => $this->requests->release($request, $service_request),
+            fn () => back()->with('success', 'Document released successfully.'),
+            'ServiceRequestController::release'
+        );
     }
 
     public function download(Request $request, ServiceRequest $service_request)
@@ -127,18 +134,20 @@ class ServiceRequestController extends Controller
 
     public function update(Request $httpRequest, ServiceRequest $request_model)
     {
-        $this->requests->update($httpRequest, $request_model);
-
-        return redirect()->route('requests.show', $request_model)
-            ->with('success', 'Request updated successfully.');
+        return $this->handle(
+            fn () => $this->requests->update($httpRequest, $request_model),
+            fn () => redirect()->route('requests.show', $request_model)->with('success', 'Request updated successfully.'),
+            'ServiceRequestController::update'
+        );
     }
 
     public function destroy(ServiceRequest $request_model)
     {
-        $this->requests->delete($request_model);
-
-        return redirect()->route('requests.index')
-            ->with('success', 'Request deleted successfully.');
+        return $this->handle(
+            fn () => $this->requests->delete($request_model),
+            fn () => redirect()->route('requests.index')->with('success', 'Request deleted successfully.'),
+            'ServiceRequestController::destroy'
+        );
     }
 
     /**
@@ -146,9 +155,11 @@ class ServiceRequestController extends Controller
      */
     public function assign(Request $httpRequest, ServiceRequest $request_model)
     {
-        $this->requests->assign($httpRequest, $request_model);
-
-        return back()->with('success', 'Request assigned successfully.');
+        return $this->handle(
+            fn () => $this->requests->assign($httpRequest, $request_model),
+            fn () => back()->with('success', 'Request assigned successfully.'),
+            'ServiceRequestController::assign'
+        );
     }
 
     /**
@@ -156,9 +167,11 @@ class ServiceRequestController extends Controller
      */
     public function process(Request $httpRequest, ServiceRequest $request_model)
     {
-        $this->requests->process($httpRequest, $request_model);
-
-        return back()->with('success', 'Request status updated successfully.');
+        return $this->handle(
+            fn () => $this->requests->process($httpRequest, $request_model),
+            fn () => back()->with('success', 'Request status updated successfully.'),
+            'ServiceRequestController::process'
+        );
     }
 
     public function approve(Request $httpRequest, ServiceRequest $request_model)

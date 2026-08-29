@@ -9,10 +9,9 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
-class IncidentService
+class IncidentService extends Service
 {
     public function __construct(private AuditLogService $auditLog)
     {
@@ -77,7 +76,7 @@ class IncidentService
             $updateData['notes'] = $validated['notes'];
         }
 
-        DB::transaction(function () use ($incident, $updateData, $oldStatus, $newStatus, $validated, $actor) {
+        $this->transaction(function () use ($incident, $updateData, $oldStatus, $newStatus, $validated, $actor) {
             $incident->update($updateData);
 
             $incident->statusHistories()->create([
@@ -95,7 +94,7 @@ class IncidentService
                 ['status' => $oldStatus],
                 ['status' => $newStatus]
             );
-        });
+        }, 'Failed to update incident status.');
     }
 
     /**
@@ -145,7 +144,7 @@ class IncidentService
             'affected_residents' => 'nullable|integer|min:0',
         ]);
 
-        return DB::transaction(function () use ($validated, $reporter) {
+        return $this->transaction(function () use ($validated, $reporter) {
             $year = now()->year;
             $lastNumber = Incident::whereYear('created_at', $year)->count() + 1;
             $incidentCode = sprintf('INC-%d-%06d', $year, $lastNumber);
@@ -171,6 +170,6 @@ class IncidentService
             $this->auditLog->log('created', 'incidents', 'Incident', $incident->id, null, $incident->toArray());
 
             return $incident;
-        });
+        }, 'Failed to create incident.');
     }
 }

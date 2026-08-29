@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 
-class CalamityService
+class CalamityService extends Service
 {
     public function list(Request $request): LengthAwarePaginator
     {
@@ -38,10 +38,12 @@ class CalamityService
         $purokIds = $validated['purok_ids'] ?? [];
         unset($validated['purok_ids']);
 
-        $calamity = Calamity::create($validated);
-        if ($purokIds) {
-            $calamity->puroks()->sync($purokIds);
-        }
+        $this->transaction(function () use ($validated, $purokIds) {
+            $calamity = Calamity::create($validated);
+            if ($purokIds) {
+                $calamity->puroks()->sync($purokIds);
+            }
+        }, 'Failed to create calamity.');
     }
 
     public function show(Calamity $calamity): Calamity
@@ -56,13 +58,17 @@ class CalamityService
         $purokIds = $validated['purok_ids'] ?? [];
         unset($validated['purok_ids']);
 
-        $calamity->update($validated);
-        $calamity->puroks()->sync($purokIds);
+        $this->transaction(function () use ($calamity, $validated, $purokIds) {
+            $calamity->update($validated);
+            $calamity->puroks()->sync($purokIds);
+        }, 'Failed to update calamity.');
     }
 
     public function delete(Calamity $calamity): void
     {
-        $calamity->delete();
+        $this->attempt(function () use ($calamity) {
+            $calamity->delete();
+        }, 'Failed to delete calamity.');
     }
 
     private function validate(Request $request, ?Calamity $calamity = null): array

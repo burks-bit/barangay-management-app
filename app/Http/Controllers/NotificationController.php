@@ -14,8 +14,10 @@ class NotificationController extends Controller
 
     public function read(Request $request, string $notification): RedirectResponse
     {
-        $this->notifications->markAsRead($request->user(), $notification);
-
-        return back();
+        return $this->handle(
+            fn () => $this->notifications->markAsRead($request->user(), $notification),
+            fn () => back(),
+            'NotificationController::read'
+        );
     }
 }

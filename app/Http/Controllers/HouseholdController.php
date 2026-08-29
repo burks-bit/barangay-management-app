@@ -35,9 +35,11 @@ class HouseholdController extends Controller
 
     public function store(Request $request)
     {
-        $this->households->create($request);
-
-        return redirect()->route('households.index')->with('success', 'Household created successfully.');
+        return $this->handle(
+            fn () => $this->households->create($request),
+            fn () => redirect()->route('households.index')->with('success', 'Household created successfully.'),
+            'HouseholdController::store'
+        );
     }
 
     public function edit(Household $household): Response
@@ -52,29 +54,37 @@ class HouseholdController extends Controller
 
     public function update(Request $request, Household $household)
     {
-        $this->households->update($request, $household);
-
-        return redirect()->route('households.index')->with('success', 'Household updated successfully.');
+        return $this->handle(
+            fn () => $this->households->update($request, $household),
+            fn () => redirect()->route('households.index')->with('success', 'Household updated successfully.'),
+            'HouseholdController::update'
+        );
     }
 
     public function destroy(Household $household)
     {
-        $this->households->delete($household);
-
-        return redirect()->route('households.index')->with('success', 'Household deleted successfully.');
+        return $this->handle(
+            fn () => $this->households->delete($household),
+            fn () => redirect()->route('households.index')->with('success', 'Household deleted successfully.'),
+            'HouseholdController::destroy'
+        );
     }
 
     public function evacuate(Request $request, Household $household)
     {
-        $this->households->evacuate($request, $household);
-
-        return back()->with('success', 'Household evacuated successfully.');
+        return $this->handle(
+            fn () => $this->households->evacuate($request, $household),
+            fn () => back()->with('success', 'Household evacuated successfully.'),
+            'HouseholdController::evacuate'
+        );
     }
 
     public function returnHome(Household $household)
     {
-        $this->households->returnHome($household);
-
-        return back()->with('success', 'Household marked as returned home.');
+        return $this->handle(
+            fn () => $this->households->returnHome($household),
+            fn () => back()->with('success', 'Household marked as returned home.'),
+            'HouseholdController::returnHome'
+        );
     }
 }

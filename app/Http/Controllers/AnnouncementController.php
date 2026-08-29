@@ -33,19 +33,23 @@ class AnnouncementController extends Controller
     {
         $publish = $request->boolean('publish');
 
-        $this->announcements->create($request, $request->user());
-
-        return back()->with(
-            'success',
-            $publish ? 'Announcement published successfully.' : 'Draft saved successfully.'
+        return $this->handle(
+            fn () => $this->announcements->create($request, $request->user()),
+            fn () => back()->with(
+                'success',
+                $publish ? 'Announcement published successfully.' : 'Draft saved successfully.'
+            ),
+            'AnnouncementController::store'
         );
     }
 
     public function update(Request $request, Announcement $announcement)
     {
-        $this->announcements->update($request, $announcement);
-
-        return back()->with('success', 'Announcement updated successfully.');
+        return $this->handle(
+            fn () => $this->announcements->update($request, $announcement),
+            fn () => back()->with('success', 'Announcement updated successfully.'),
+            'AnnouncementController::update'
+        );
     }
 
     /**
@@ -53,9 +57,11 @@ class AnnouncementController extends Controller
      */
     public function publish(Announcement $announcement)
     {
-        $this->announcements->publish($announcement);
-
-        return back()->with('success', 'Announcement published successfully.');
+        return $this->handle(
+            fn () => $this->announcements->publish($announcement),
+            fn () => back()->with('success', 'Announcement published successfully.'),
+            'AnnouncementController::publish'
+        );
     }
 
     /**
@@ -63,15 +69,19 @@ class AnnouncementController extends Controller
      */
     public function archive(Announcement $announcement)
     {
-        $this->announcements->archive($announcement);
-
-        return back()->with('success', 'Announcement archived successfully.');
+        return $this->handle(
+            fn () => $this->announcements->archive($announcement),
+            fn () => back()->with('success', 'Announcement archived successfully.'),
+            'AnnouncementController::archive'
+        );
     }
 
     public function destroy(Announcement $announcement)
     {
-        $this->announcements->delete($announcement);
-
-        return redirect()->route('announcements.manage')->with('success', 'Announcement deleted successfully.');
+        return $this->handle(
+            fn () => $this->announcements->delete($announcement),
+            fn () => redirect()->route('announcements.manage')->with('success', 'Announcement deleted successfully.'),
+            'AnnouncementController::destroy'
+        );
     }
 }

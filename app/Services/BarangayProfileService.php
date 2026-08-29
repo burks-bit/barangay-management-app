@@ -7,7 +7,7 @@ use App\Models\BarangayProfile;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 
-class BarangayProfileService
+class BarangayProfileService extends Service
 {
     public function list(): Collection
     {
@@ -20,7 +20,9 @@ class BarangayProfileService
     {
         $validated = $this->validateProfile($request);
 
-        BarangayProfile::create($validated);
+        $this->attempt(function () use ($validated) {
+            BarangayProfile::create($validated);
+        }, 'Failed to create barangay profile.');
     }
 
     public function show(BarangayProfile $barangay): BarangayProfile
@@ -36,31 +38,41 @@ class BarangayProfileService
     {
         $validated = $this->validateProfile($request);
 
-        $barangay->update($validated);
+        $this->attempt(function () use ($validated, $barangay) {
+            $barangay->update($validated);
+        }, 'Failed to update barangay profile.');
     }
 
     public function delete(BarangayProfile $barangay): void
     {
-        $barangay->delete();
+        $this->attempt(function () use ($barangay) {
+            $barangay->delete();
+        }, 'Failed to delete barangay profile.');
     }
 
     public function createOfficial(Request $request, BarangayProfile $barangay): void
     {
         $validated = $this->validateOfficial($request);
 
-        $barangay->officials()->create($validated);
+        $this->attempt(function () use ($request, $barangay, $validated) {
+            $barangay->officials()->create($validated);
+        }, 'Failed to create barangay official.');
     }
 
     public function updateOfficial(Request $request, BarangayOfficial $official): void
     {
         $validated = $this->validateOfficial($request);
 
-        $official->update($validated);
+        $this->attempt(function () use ($official, $validated) {
+            $official->update($validated);
+        }, 'Failed to update barangay official.');
     }
 
     public function deleteOfficial(BarangayOfficial $official): void
     {
-        $official->delete();
+        $this->attempt(function () use ($official) {
+            $official->delete();
+        }, 'Failed to delete barangay official.');
     }
 
     private function validateProfile(Request $request): array

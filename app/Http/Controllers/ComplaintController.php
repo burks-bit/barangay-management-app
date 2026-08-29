@@ -59,10 +59,11 @@ class ComplaintController extends Controller
 
     public function store(Request $request)
     {
-        $this->complaints->create($request, $request->user());
-
-        return redirect()->route('my-complaints')
-            ->with('success', 'Complaint submitted successfully. Our team will review it shortly.');
+        return $this->handle(
+            fn () => $this->complaints->create($request, $request->user()),
+            fn () => redirect()->route('my-complaints')->with('success', 'Complaint submitted successfully. Our team will review it shortly.'),
+            'ComplaintController::store'
+        );
     }
 
     public function show(Complaint $complaint): Response
@@ -83,18 +84,20 @@ class ComplaintController extends Controller
 
     public function update(Request $request, Complaint $complaint)
     {
-        $this->complaints->update($request, $complaint);
-
-        return redirect()->route('complaints.show', $complaint)
-            ->with('success', 'Complaint updated successfully.');
+        return $this->handle(
+            fn () => $this->complaints->update($request, $complaint),
+            fn () => redirect()->route('complaints.show', $complaint)->with('success', 'Complaint updated successfully.'),
+            'ComplaintController::update'
+        );
     }
 
     public function destroy(Complaint $complaint)
     {
-        $this->complaints->delete($complaint);
-
-        return redirect()->route('complaints.index')
-            ->with('success', 'Complaint deleted successfully.');
+        return $this->handle(
+            fn () => $this->complaints->delete($complaint),
+            fn () => redirect()->route('complaints.index')->with('success', 'Complaint deleted successfully.'),
+            'ComplaintController::destroy'
+        );
     }
 
     /**
@@ -102,9 +105,11 @@ class ComplaintController extends Controller
      */
     public function assign(Request $request, Complaint $complaint)
     {
-        $this->complaints->assign($request, $complaint, $request->user());
-
-        return back()->with('success', 'Complaint assigned successfully.');
+        return $this->handle(
+            fn () => $this->complaints->assign($request, $complaint, $request->user()),
+            fn () => back()->with('success', 'Complaint assigned successfully.'),
+            'ComplaintController::assign'
+        );
     }
 
     /**
@@ -112,9 +117,11 @@ class ComplaintController extends Controller
      */
     public function process(Request $request, Complaint $complaint)
     {
-        $this->complaints->process($request, $complaint, $request->user());
-
-        return back()->with('success', 'Complaint status updated successfully.');
+        return $this->handle(
+            fn () => $this->complaints->process($request, $complaint, $request->user()),
+            fn () => back()->with('success', 'Complaint status updated successfully.'),
+            'ComplaintController::process'
+        );
     }
 
     /**
@@ -122,8 +129,10 @@ class ComplaintController extends Controller
      */
     public function resolve(Request $request, Complaint $complaint)
     {
-        $this->complaints->resolve($request, $complaint, $request->user());
-
-        return back()->with('success', 'Complaint resolved successfully.');
+        return $this->handle(
+            fn () => $this->complaints->resolve($request, $complaint, $request->user()),
+            fn () => back()->with('success', 'Complaint resolved successfully.'),
+            'ComplaintController::resolve'
+        );
     }
 }

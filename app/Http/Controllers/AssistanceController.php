@@ -40,10 +40,11 @@ class AssistanceController extends Controller
 
     public function store(Request $request)
     {
-        $this->assistance->create($request, $request->user());
-
-        return redirect()->route('my-assistance')
-            ->with('success', 'Assistance request submitted successfully.');
+        return $this->handle(
+            fn () => $this->assistance->create($request, $request->user()),
+            fn () => redirect()->route('my-assistance')->with('success', 'Assistance request submitted successfully.'),
+            'AssistanceController::store'
+        );
     }
 
     /**
@@ -51,11 +52,12 @@ class AssistanceController extends Controller
      */
     public function updateStatus(Request $httpRequest, AssistanceRequest $assistance_request)
     {
-        $this->assistance->updateStatus($httpRequest, $assistance_request, $httpRequest->user());
+        $status = str_replace('_', ' ', $httpRequest->input('status'));
 
-        return back()->with(
-            'success',
-            "Assistance request marked as " . str_replace('_', ' ', $httpRequest->input('status')) . "."
+        return $this->handle(
+            fn () => $this->assistance->updateStatus($httpRequest, $assistance_request, $httpRequest->user()),
+            fn () => back()->with('success', "Assistance request marked as {$status}."),
+            'AssistanceController::updateStatus'
         );
     }
 }

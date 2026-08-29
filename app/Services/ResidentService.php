@@ -9,9 +9,8 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\DB;
 
-class ResidentService
+class ResidentService extends Service
 {
     public function __construct(private AuditLogService $auditLog)
     {
@@ -57,7 +56,9 @@ class ResidentService
             'sex' => 'required|in:male,female',
             'civil_status' => 'required|in:single,married,widowed,separated,divorced',
             'contact_number' => 'nullable|string|max:20',
-            'email' => 'nullable|email|max:255|unique:users,email',
+            // The email is only required when an account is being created for
+            // the resident, otherwise the users.email column would receive null.
+            'email' => ['nullable', 'required_if:create_account,true', 'email', 'max:255', 'unique:users,email'],
             'address' => 'required|string|max:500',
             'purok_id' => 'required|exists:puroks,id',
             'household_id' => 'nullable|exists:households,id',
@@ -69,7 +70,7 @@ class ResidentService
             'password' => 'required_if:create_account,true|min:8',
         ]);
 
-        DB::transaction(function () use ($validated) {
+        $this->transaction(function () use ($validated) {
             $userId = null;
 
             if (! empty($validated['create_account'])) {
@@ -89,7 +90,7 @@ class ResidentService
             ));
 
             $this->auditLog->log('created', 'residents', 'MemberProfile', $resident->id, null, $resident->toArray());
-        });
+        }, 'ResidentService::create');
     }
 
     public function show(MemberProfile $resident): MemberProfile
@@ -118,37 +119,44 @@ class ResidentService
         ]);
 
         $oldValues = $resident->only(array_keys($validated));
-        $resident->update($validated);
 
-        $this->auditLog->log('updated', 'residents', 'MemberProfile', $resident->id, $oldValues, $resident->fresh()->toArray());
+        $this->transaction(function () use ($validated, $oldValues, $resident) {
+            $resident->update($validated);
+
+            $this->auditLog->log('updated', 'residents', 'MemberProfile', $resident->id, $oldValues, $resident->fresh()->toArray());
+        }, 'ResidentService::update');
     }
 
     public function delete(MemberProfile $resident): void
     {
-        $oldValues = $resident->toArray();
-        $resident->delete();
+        $this->attempt(function () use ($resident) {
+            $oldValues = $resident->toArray();
+            $resident->delete();
 
-        $this->auditLog->log('deleted', 'residents', 'MemberProfile', $resident->id, $oldValues, null);
+            $this->auditLog->log('deleted', 'residents', 'MemberProfile', $resident->id, $oldValues, null);
+        }, 'ResidentService::delete');
     }
 
     public function verify(MemberProfile $resident): void
     {
         $oldStatus = $resident->verification_status;
 
-        $resident->update([
-            'verification_status' => 'verified',
-            'verified_by' => auth()->id(),
-            'verified_at' => now(),
-        ]);
+        $this->attempt(function () use ($oldStatus, $resident) {
+            $resident->update([
+                'verification_status' => 'verified',
+                'verified_by' => auth()->id(),
+                'verified_at' => now(),
+            ]);
 
-        $this->auditLog->log(
-            'verified resident',
-            'residents',
-            'MemberProfile',
-            $resident->id,
-            ['verification_status' => $oldStatus],
-            ['verification_status' => 'verified']
-        );
+            $this->auditLog->log(
+                'verified resident',
+                'residents',
+                'MemberProfile',
+                $resident->id,
+                ['verification_status' => $oldStatus],
+                ['verification_status' => 'verified']
+            );
+        }, 'ResidentService::verify');
     }
 
     public function rejectVerification(Request $request, MemberProfile $resident): void
@@ -157,19 +165,21 @@ class ResidentService
 
         $oldStatus = $resident->verification_status;
 
-        $resident->update([
-            'verification_status' => 'rejected',
-            'verified_by' => auth()->id(),
-            'verified_at' => now(),
-        ]);
+        $this->attempt(function () use ($oldStatus, $request, $resident) {
+            $resident->update([
+                'verification_status' => 'rejected',
+                'verified_by' => auth()->id(),
+                'verified_at' => now(),
+            ]);
 
-        $this->auditLog->log(
-            'rejected resident verification',
-            'residents',
-            'MemberProfile',
-            $resident->id,
-            ['verification_status' => $oldStatus],
-            ['verification_status' => 'rejected', 'reason' => $request->reason]
-        );
+            $this->auditLog->log(
+                'rejected resident verification',
+                'residents',
+                'MemberProfile',
+                $resident->id,
+                ['verification_status' => $oldStatus],
+                ['verification_status' => 'rejected', 'reason' => $request->reason]
+            );
+        }, 'ResidentService::rejectVerification');
     }
 }

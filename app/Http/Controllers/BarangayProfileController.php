@@ -29,16 +29,20 @@ class BarangayProfileController extends Controller
 
     public function store(Request $request)
     {
-        $this->barangays->create($request);
-
-        return redirect()->route('barangay.index')->with('success', 'Barangay profile created successfully.');
+        return $this->handle(
+            fn () => $this->barangays->create($request),
+            fn () => redirect()->route('barangay.index')->with('success', 'Barangay profile created successfully.'),
+            'BarangayProfileController::store'
+        );
     }
 
     public function storeOfficial(Request $request, BarangayProfile $barangay)
     {
-        $this->barangays->createOfficial($request, $barangay);
-
-        return redirect()->route('barangay.show', $barangay)->with('success', 'Official added successfully.');
+        return $this->handle(
+            fn () => $this->barangays->createOfficial($request, $barangay),
+            fn () => redirect()->route('barangay.show', $barangay)->with('success', 'Official added successfully.'),
+            'BarangayProfileController::storeOfficial'
+        );
     }
 
     public function show(BarangayProfile $barangay): Response
@@ -57,29 +61,37 @@ class BarangayProfileController extends Controller
 
     public function update(Request $request, BarangayProfile $barangay)
     {
-        $this->barangays->update($request, $barangay);
-
-        return redirect()->route('barangay.show', $barangay)->with('success', 'Barangay profile updated successfully.');
+        return $this->handle(
+            fn () => $this->barangays->update($request, $barangay),
+            fn () => redirect()->route('barangay.show', $barangay)->with('success', 'Barangay profile updated successfully.'),
+            'BarangayProfileController::update'
+        );
     }
 
     public function destroy(BarangayProfile $barangay)
     {
-        $this->barangays->delete($barangay);
-
-        return redirect()->route('barangay.index')->with('success', 'Barangay profile deleted successfully.');
+        return $this->handle(
+            fn () => $this->barangays->delete($barangay),
+            fn () => redirect()->route('barangay.index')->with('success', 'Barangay profile deleted successfully.'),
+            'BarangayProfileController::destroy'
+        );
     }
 
     public function updateOfficial(Request $request, BarangayProfile $barangay, BarangayOfficial $official)
     {
-        $this->barangays->updateOfficial($request, $official);
-
-        return redirect()->route('barangay.show', $barangay)->with('success', 'Official updated successfully.');
+        return $this->handle(
+            fn () => $this->barangays->updateOfficial($request, $official),
+            fn () => redirect()->route('barangay.show', $barangay)->with('success', 'Official updated successfully.'),
+            'BarangayProfileController::updateOfficial'
+        );
     }
 
     public function destroyOfficial(BarangayProfile $barangay, BarangayOfficial $official)
     {
-        $this->barangays->deleteOfficial($official);
-
-        return redirect()->route('barangay.show', $barangay)->with('success', 'Official removed successfully.');
+        return $this->handle(
+            fn () => $this->barangays->deleteOfficial($official),
+            fn () => redirect()->route('barangay.show', $barangay)->with('success', 'Official removed successfully.'),
+            'BarangayProfileController::destroyOfficial'
+        );
     }
 }

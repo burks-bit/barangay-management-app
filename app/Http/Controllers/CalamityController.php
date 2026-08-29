@@ -32,9 +32,11 @@ class CalamityController extends Controller
 
     public function store(Request $request)
     {
-        $this->calamities->create($request);
-
-        return redirect()->route('calamities.index')->with('success', 'Calamity created successfully.');
+        return $this->handle(
+            fn () => $this->calamities->create($request),
+            fn () => redirect()->route('calamities.index')->with('success', 'Calamity created successfully.'),
+            'CalamityController::store'
+        );
     }
 
     public function edit(Calamity $calamity): Response
@@ -47,15 +49,19 @@ class CalamityController extends Controller
 
     public function update(Request $request, Calamity $calamity)
     {
-        $this->calamities->update($request, $calamity);
-
-        return redirect()->route('calamities.index')->with('success', 'Calamity updated successfully.');
+        return $this->handle(
+            fn () => $this->calamities->update($request, $calamity),
+            fn () => redirect()->route('calamities.index')->with('success', 'Calamity updated successfully.'),
+            'CalamityController::update'
+        );
     }
 
     public function destroy(Calamity $calamity)
     {
-        $this->calamities->delete($calamity);
-
-        return redirect()->route('calamities.index')->with('success', 'Calamity deleted successfully.');
+        return $this->handle(
+            fn () => $this->calamities->delete($calamity),
+            fn () => redirect()->route('calamities.index')->with('success', 'Calamity deleted successfully.'),
+            'CalamityController::destroy'
+        );
     }
 }

@@ -34,10 +34,11 @@ class ResidentController extends Controller
 
     public function store(Request $request)
     {
-        $this->residents->create($request);
-
-        return redirect()->route('residents.index')
-            ->with('success', 'Resident created successfully.');
+        return $this->handle(
+            fn () => $this->residents->create($request),
+            fn () => redirect()->route('residents.index')->with('success', 'Resident created successfully.'),
+            'ResidentController::store'
+        );
     }
 
     public function show(MemberProfile $resident): Response
@@ -58,31 +59,37 @@ class ResidentController extends Controller
 
     public function update(Request $request, MemberProfile $resident)
     {
-        $this->residents->update($request, $resident);
-
-        return redirect()->route('residents.show', $resident)
-            ->with('success', 'Resident updated successfully.');
+        return $this->handle(
+            fn () => $this->residents->update($request, $resident),
+            fn () => redirect()->route('residents.show', $resident)->with('success', 'Resident updated successfully.'),
+            'ResidentController::update'
+        );
     }
 
     public function destroy(MemberProfile $resident)
     {
-        $this->residents->delete($resident);
-
-        return redirect()->route('residents.index')
-            ->with('success', 'Resident deleted successfully.');
+        return $this->handle(
+            fn () => $this->residents->delete($resident),
+            fn () => redirect()->route('residents.index')->with('success', 'Resident deleted successfully.'),
+            'ResidentController::destroy'
+        );
     }
 
     public function verify(Request $request, MemberProfile $resident)
     {
-        $this->residents->verify($resident);
-
-        return back()->with('success', 'Resident verified successfully.');
+        return $this->handle(
+            fn () => $this->residents->verify($resident),
+            fn () => back()->with('success', 'Resident verified successfully.'),
+            'ResidentController::verify'
+        );
     }
 
     public function rejectVerification(Request $request, MemberProfile $resident)
     {
-        $this->residents->rejectVerification($request, $resident);
-
-        return back()->with('success', 'Resident verification rejected.');
+        return $this->handle(
+            fn () => $this->residents->rejectVerification($request, $resident),
+            fn () => back()->with('success', 'Resident verification rejected.'),
+            'ResidentController::rejectVerification'
+        );
     }
 }
